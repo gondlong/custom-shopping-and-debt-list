@@ -86,10 +86,10 @@ Once the integration is added, the **Belanja & Utang** card will automatically a
 type: custom:custom-shopping-and-debt-list
 title: Shopping & Debt List
 entities:
-  - sensor.ndlong_shop_shopping_list
-  - sensor.ndlong_shop_total_debt
-  - sensor.ndlong_shop_debt_list
-  - sensor.ndlong_shop_debt_by_category
+  - sensor.shopping_debt_shopping_list
+  - sensor.shopping_debt_total_debt
+  - sensor.shopping_debt_debt_list
+  - sensor.shopping_debt_debt_by_category
 ```
 
 *(Adjust the `entity_id` values above to match the entities created under your integration device).*

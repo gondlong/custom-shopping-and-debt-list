@@ -1,9 +1,9 @@
 """Sensors for custom_shopping_and_debt_list.
 
 Entities:
-  * sensor.custom_shopping_and_debt_list_shopping_list  -> text summary of the shopping list
-  * sensor.custom_shopping_and_debt_list_debt_total     -> number, the total debt amount
-  * sensor.custom_shopping_and_debt_list_debt_list      -> count of debt entries (list in attributes)
+  * sensor.shopping_debt_shopping_list  -> text summary of the shopping list
+  * sensor.shopping_debt_total_debt     -> number, the total debt amount
+  * sensor.shopping_debt_debt_list      -> count of debt entries (list in attributes)
 """
 
 from __future__ import annotations
@@ -57,7 +57,7 @@ class SensorShoppingList(SensorEntity, RestoreEntity):
     """Sensor that summarises the shopping list."""
 
     _attr_has_entity_name = False
-    _attr_name = "Ndlong Shop - Shopping List"
+    _attr_name = "Shopping & Debt - Shopping List"
     _attr_unique_id = "custom_shopping_and_debt_list_shopping_list"
     _attr_icon = "mdi:shopping-cart"
 
@@ -94,7 +94,7 @@ class SensorDebtTotal(SensorEntity, RestoreEntity):
     """Sensor that holds the total debt."""
 
     _attr_has_entity_name = False
-    _attr_name = "Ndlong Shop - Total Debt"
+    _attr_name = "Shopping & Debt - Total Debt"
     _attr_unique_id = "custom_shopping_and_debt_list_debt_total"
     _attr_icon = "mdi:account-cash"
 
@@ -122,7 +122,7 @@ class SensorDebtList(SensorEntity, RestoreEntity):
     """
 
     _attr_has_entity_name = False
-    _attr_name = "Ndlong Shop - Debt List"
+    _attr_name = "Shopping & Debt - Debt List"
     _attr_unique_id = "custom_shopping_and_debt_list_debt_list"
     _attr_icon = "mdi:account-cash-multiple"
 
@@ -149,7 +149,7 @@ class SensorDebtByKategori(SensorEntity, RestoreEntity):
     """Sensor: debt broken down by category (JSON)."""
 
     _attr_has_entity_name = False
-    _attr_name = "Ndlong Shop - Debt by Category"
+    _attr_name = "Shopping & Debt - Debt by Category"
     _attr_unique_id = "custom_shopping_and_debt_list_debt_by_kategori"
     _attr_icon = "mdi:pie-chart"
 

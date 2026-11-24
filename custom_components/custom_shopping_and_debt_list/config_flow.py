@@ -35,7 +35,7 @@ async def async_get_options_flow(
     return NdlongShopOptionsFlow()
 
 
-class NdlongShopConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
+class ShoppingAndDebtConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for custom_shopping_and_debt_list."""
 
     VERSION = 1
