@@ -3,23 +3,23 @@
     "step": {
       "user": {
         "title": "Custom Shopping and Debt List",
-        "description": "Klik Submit untuk mengaktifkan integrasi. Data disimpan di HA Store (ikut backup)."
+        "description": "Click Submit to activate the integration. Data is stored in Home Assistant Storage and is included in backups."
       }
     },
     "abort": {
-      "already_configured": "Integrasi sudah dikonfigurasi."
+      "already_configured": "The integration is already configured."
     },
     "error": {}
   },
   "options": {
     "step": {
       "init": {
-        "title": "Pengaturan",
+        "title": "Settings",
         "description": "{msg}"
       },
       "add_category": {
-        "title": "Tambah kategori utang",
-        "description": "Masukkan nama kategori baru."
+        "title": "Add Debt Category",
+        "description": "Enter the name of the new category."
       }
     }
   }
