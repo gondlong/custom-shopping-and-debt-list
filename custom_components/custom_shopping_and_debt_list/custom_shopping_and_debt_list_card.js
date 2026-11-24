@@ -82,6 +82,7 @@ const CARD_STYLES = [
   ".total-bar h3 { margin: 0; font-size: 14px; font-weight: 600; }",
   ".empty { padding: 12px; font-size: 12px; color: var(--secondary-text-color, #9e9e9e); text-align: center; }",
 ].join("\n");
+
 class NdlongShopCard extends HTMLElement {
   constructor() {
     super();
@@ -155,20 +156,27 @@ class NdlongShopCard extends HTMLElement {
     });
   }
 
-  _total() {
-    const st = this._findEntity("total_debt", 1) || this._findEntity("debt_total", 1);
-    const n = st ? Number(st.state) : 0;
-    return Number.isFinite(n) ? n : 0;
+  _total(debtList) {
+    const list = Array.isArray(debtList) ? debtList : this._debtList();
+    return list.reduce((sum, d) => {
+      const nom = Number(d.nominal) || 0;
+      const parsed = this._parseNoteAndInstallment(d.catatan);
+      if (parsed.cur !== null && parsed.total !== null && parsed.total >= parsed.cur) {
+        const remainingMonths = (parsed.total - parsed.cur) + 1;
+        return sum + (nom * remainingMonths);
+      }
+      return sum + nom;
+    }, 0);
   }
 
   _parseDueDate(dueStr) {
     if (!dueStr) return null;
-    const clean = String(dueStr).split("T").trim();
+    const clean = String(dueStr).split("T")[0].trim();
     const parts = clean.split("-");
     if (parts.length !== 3) return null;
-    const year = Number(parts);
-    const month = Number(parts) - 1;
-    const day = Number(parts);
+    const year = Number(parts[0]);
+    const month = Number(parts[1]) - 1;
+    const day = Number(parts[2]);
     if (!Number.isFinite(year) || !Number.isFinite(month) || !Number.isFinite(day)) return null;
     return new Date(year, month, day);
   }
@@ -178,7 +186,6 @@ class NdlongShopCard extends HTMLElement {
     if (!d) return "";
     const targetMonth = d.getMonth() + 1;
     const next = new Date(d.getFullYear(), targetMonth, d.getDate());
-    // Tangani akhir bulan (misal 31 Jan -> 28 Feb)
     if (next.getMonth() !== targetMonth % 12) {
       next.setDate(0);
     }
@@ -194,11 +201,11 @@ class NdlongShopCard extends HTMLElement {
     if (!match) {
       return { cleanNote: text.trim(), cur: null, total: null };
     }
-    const cleanNote = text.replace(match, "").trim();
+    const cleanNote = text.replace(match[0], "").trim();
     return {
       cleanNote: cleanNote,
-      cur: Number(match),
-      total: Number(match),
+      cur: Number(match[1]),
+      total: Number(match[2]),
     };
   }
 
@@ -229,10 +236,18 @@ class NdlongShopCard extends HTMLElement {
     });
   }
 
-  _upcoming5DaysTotal(sortedDebtList) {
+  _getNext5thCutoff() {
     const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const limit = new Date(today.getTime() + 5 * 24 * 60 * 60 * 1000);
+    const year = now.getFullYear();
+    const month = now.getMonth();
+    const date = now.getDate();
+
+    const targetMonth = date <= 5 ? month : month + 1;
+    return new Date(year, targetMonth, 5);
+  }
+
+  _upcoming5DaysTotal(sortedDebtList) {
+    const limit = this._getNext5thCutoff();
 
     return sortedDebtList.reduce((sum, d) => {
       const due = this._parseDueDate(d && d.due_date);
@@ -299,7 +314,7 @@ class NdlongShopCard extends HTMLElement {
       '    <div class="panel">',
       '      <div class="panel-title">',
       "        <span>Utang</span>",
-      '        <span id="debt-panel-total" class="due-badge">Jatuh Tempo &le;5 Hari: Rp 0</span>',
+      '        <span id="debt-panel-total" class="due-badge">Tagihan s.d. Tgl 5: Rp 0</span>',
       "      </div>",
       '      <div class="add-form">',
       '        <select id="cat-debt" class="in"></select>',
@@ -327,6 +342,7 @@ class NdlongShopCard extends HTMLElement {
     ].join("\n");
     this._setupListeners();
   }
+
   _updateSelectOptions(selectEl, categories, lastSigProp) {
     if (!selectEl) return;
     const sig = categories.join("|");
@@ -345,16 +361,18 @@ class NdlongShopCard extends HTMLElement {
     const shopping = this._shopping();
     const cats = this._byKategori();
     const debtList = this._debtList();
-    const total = this._total();
+    const total = this._total(debtList);
     const upcomingTotal = this._upcoming5DaysTotal(debtList);
 
     const totalLabel = "Rp " + Math.round(total).toLocaleString("id-ID");
     const upcomingLabel = "Rp " + Math.round(upcomingTotal).toLocaleString("id-ID");
     const doneCount = shopping.filter((it) => it.done).length;
 
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const limit5Days = new Date(today.getTime() + 5 * 24 * 60 * 60 * 1000);
+    const limitDate = this._getNext5thCutoff();
+    const cutoffShort = [
+      String(limitDate.getDate()).padStart(2, "0"),
+      String(limitDate.getMonth() + 1).padStart(2, "0"),
+    ].join("/");
 
     this._updateSelectOptions(root.querySelector("#cat-shopping"), this._shoppingCategories(), "_lastShoppingCatsSig");
     this._updateSelectOptions(root.querySelector("#cat-debt"), this._debtCategories(), "_lastDebtCatsSig");
@@ -405,9 +423,9 @@ class NdlongShopCard extends HTMLElement {
               ? '<button type="button" class="pay-btn" title="Tandai cicilan ini dibayar (+1 &amp; majukan tanggal 1 bulan)" data-action="pay-installment" data-id="' + idEsc + '">&#10003; Bayar</button>'
               : "";
 
-            const dueText = d.due_date ? String(d.due_date).split("T") : "";
+            const dueText = d.due_date ? String(d.due_date).split("T")[0] : "";
             const dueObj = this._parseDueDate(d.due_date);
-            const isUrgent = dueObj && dueObj.getTime() <= limit5Days.getTime();
+            const isUrgent = dueObj && dueObj.getTime() <= limitDate.getTime();
             const hasNote = parsedNote.cleanNote || dueText;
             const subNote = hasNote
               ? '<div class="note ' + (isUrgent ? "urgent" : "") + '">' + esc(parsedNote.cleanNote || "") + (dueText ? " (" + esc(dueText) + ")" : "") + "</div>"
@@ -433,11 +451,12 @@ class NdlongShopCard extends HTMLElement {
     }
 
     const panelTotalEl = root.querySelector("#debt-panel-total");
-    if (panelTotalEl) panelTotalEl.textContent = "Jatuh Tempo <=5 Hari: " + upcomingLabel;
+    if (panelTotalEl) panelTotalEl.textContent = "Tagihan s.d. " + cutoffShort + ": " + upcomingLabel;
 
     const barTotalEl = root.querySelector("#debt-bar-total");
     if (barTotalEl) barTotalEl.textContent = totalLabel;
   }
+
   _setupListeners() {
     const root = this._root;
     if (!root || this._listenersAttached) return;
@@ -522,7 +541,6 @@ class NdlongShopCard extends HTMLElement {
         const parsed = this._parseNoteAndInstallment(debt.catatan);
         if (parsed.cur === null || parsed.total === null) return;
 
-        // Jika sudah cicilan terakhir (misal 3/3), hapus utang karena sudah lunas
         if (parsed.cur >= parsed.total) {
           await this._call("custom_shopping_and_debt_list_remove_debt", { entry_id: String(debt.id) });
           this._lastSignature = "";
@@ -551,7 +569,7 @@ class NdlongShopCard extends HTMLElement {
         this._setVal("note-add", parsed.cleanNote);
         this._setVal("inst-cur", parsed.cur !== null ? String(parsed.cur) : "");
         this._setVal("inst-tot", parsed.total !== null ? String(parsed.total) : "");
-        this._setVal("due-add", debt.due_date ? String(debt.due_date).split("T") : "");
+        this._setVal("due-add", debt.due_date ? String(debt.due_date).split("T")[0] : "");
         root.querySelector("#btn-submit-debt").textContent = "Simpan";
         root.querySelector("#btn-cancel-debt").style.display = "inline-block";
         this._render();
@@ -619,4 +637,4 @@ if (!window.customCards.some((c) => c.type === "custom-shopping-and-debt-list"))
   });
 }
 
-console.info("%c BELANJA & UTANG CARD %c v1.5 ", "color: white; background: #03a9f4; font-weight: bold;", "color: #03a9f4; background: white; font-weight: bold;");
+console.info("%c BELANJA & UTANG CARD %c v1.6 ", "color: white; background: #03a9f4; font-weight: bold;", "color: #03a9f4; background: white; font-weight: bold;");
