@@ -1,9 +1,6 @@
+/** eslint-env browser */
 /**
- * Custom Lovelace card for the Custom Shopping and Debt List integration.
- *
- * The card structure and forms are created only once. Home Assistant state
- * updates replace only the dynamic list content, so typing, focus, and form
- * values are not interrupted.
+ * custom_shopping_and_debt_list Lovelace custom card.
  */
 
 const DOMAIN = "custom_shopping_and_debt_list";
@@ -16,923 +13,610 @@ const DEFAULT_ENTITIES = [
 ];
 
 const DEFAULT_SHOPPING_CATS = [
+  "Lainnya",
   "Kebutuhan",
   "Makanan",
   "Hiburan",
   "Kesehatan",
-  "Lainnya",
 ];
 
 const DEFAULT_DEBT_CATS = [
+  "Lainnya",
+  "Pinjaman Online",
+  "Pinjaman Bank",
+  "Pinjaman Rekan",
   "Listrik",
   "Internet",
-  "Uang Makan",
-  "Utang Teman",
-  "Pinjaman Online",
-  "Lainnya",
+  "Kontrakan",
 ];
 
-const STYLES = `
-  :host {
-    display: block;
-  }
-
-  .wrap {
-    font-family: var(--paper-font-body1_-_font-family, inherit);
-    color: var(--primary-text-color);
-  }
-
-  h2 {
-    margin: 0 0 8px;
-    font-size: 18px;
-    font-weight: 500;
-  }
-
-  h3 {
-    margin: 16px 0 4px;
-    font-size: 14px;
-    font-weight: 500;
-    opacity: 0.8;
-  }
-
-  .muted {
-    opacity: 0.6;
-    font-size: 12px;
-  }
-
-  ul {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-  }
-
-  li.item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 6px 8px;
-    border-radius: 8px;
-  }
-
-  li.item + li.item {
-    border-top: 1px solid var(--divider-color, #e0e0e0);
-  }
-
-  li.item.done .name {
-    text-decoration: line-through;
-    opacity: 0.5;
-  }
-
-  li.item .name {
-    flex: 1;
-    min-width: 0;
-    overflow-wrap: anywhere;
-  }
-
-  li.item .qty {
-    opacity: 0.7;
-    font-size: 12px;
-    white-space: nowrap;
-  }
-
-  li.item .cat {
-    font-size: 11px;
-    padding: 1px 6px;
-    border-radius: 10px;
-    background: var(--secondary-background-color, #eee);
-    opacity: 0.8;
-    white-space: nowrap;
-  }
-
-  button {
-    cursor: pointer;
-    border: none;
-    background: transparent;
-    color: inherit;
-    font-size: 14px;
-    padding: 2px 6px;
-    border-radius: 6px;
-  }
-
-  button:hover {
-    background: var(--secondary-background-color, #eee);
-  }
-
-  button.primary {
-    background: var(--primary-color, #03a9f4);
-    color: var(--text-primary-color, #fff);
-    padding: 6px 12px;
-  }
-
-  button.cancel {
-    background: var(--secondary-background-color, #eee);
-    color: var(--primary-text-color);
-    padding: 6px 12px;
-  }
-
-  form {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    align-items: center;
-    margin-top: 8px;
-  }
-
-  input,
-  select {
-    font: inherit;
-    color: inherit;
-    padding: 6px 8px;
-    border-radius: 8px;
-    border: 1px solid var(--divider-color, #ccc);
-    background: var(--card-background-color, #fff);
-  }
-
-  input.grow {
-    flex: 1;
-    min-width: 90px;
-  }
-
-  input[type="checkbox"] {
-    flex: 0 0 auto;
-  }
-
-  .total {
-    font-size: 22px;
-    font-weight: 600;
-  }
-
-  .cat-row {
-    margin-bottom: 2px;
-  }
-
-  .card {
-    background: var(--card-background-color, #fff);
-    border-radius: var(--ha-card-border-radius, 12px);
-    padding: 16px;
-    box-shadow: var(--ha-card-box-shadow, none);
-  }
-
-  .actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px;
-    margin-top: 6px;
-  }
-`;
-
-function esc(value) {
-  return String(value ?? "").replace(
-    /[&<>"']/g,
-    (ch) =>
-      ({
-        "&": "&amp;",
-        "<": "&lt;",
-        ">": "&gt;",
-        '"': "&quot;",
-        "'": "&#39;",
-      })[ch],
-  );
-}
-
+const CARD_STYLES = [
+  ":host { display: block; font-family: var(--paper-font-body1_-_font-family, Roboto, sans-serif); color: var(--primary-text-color, #e1e1e1); }",
+  "ha-card { padding: 16px; box-sizing: border-box; }",
+  "h2 { font-size: 18px; font-weight: 500; margin: 0 0 4px; color: var(--primary-text-color); }",
+  ".sub { font-size: 12px; color: var(--secondary-text-color, #9e9e9e); margin-bottom: 14px; }",
+  ".grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-items: start; }",
+  "@media (max-width: 720px) { .grid { grid-template-columns: 1fr; } }",
+  ".panel { border: 1px solid var(--divider-color, rgba(255, 255, 255, 0.12)); border-radius: 10px; overflow: hidden; background: var(--card-background-color, transparent); display: flex; flex-direction: column; }",
+  ".panel-title { font-weight: 600; font-size: 13px; padding: 10px 12px; background: var(--secondary-background-color, rgba(255, 255, 255, 0.04)); border-bottom: 1px solid var(--divider-color, rgba(255, 255, 255, 0.12)); display: flex; justify-content: space-between; align-items: center; gap: 8px; }",
+  ".due-badge { font-size: 12px; font-weight: 600; color: var(--warning-color, #ffb74d); }",
+  ".mini-btn { background: rgba(255, 255, 255, 0.08); border: 1px solid var(--divider-color, rgba(255, 255, 255, 0.15)); color: var(--primary-text-color, #fff); font-size: 11px; padding: 2px 8px; border-radius: 4px; cursor: pointer; }",
+  ".mini-btn:hover { background: rgba(255, 255, 255, 0.15); }",
+  ".add-form { display: flex; gap: 6px; padding: 8px; flex-wrap: wrap; border-bottom: 1px solid var(--divider-color, rgba(255, 255, 255, 0.12)); align-items: center; }",
+  ".add-form .in { flex: 1 1 85px; min-width: 0; padding: 6px 8px; border: 1px solid var(--divider-color, rgba(255, 255, 255, 0.2)); border-radius: 6px; font-size: 13px; background: var(--card-background-color, #1c1c1c); color: var(--primary-text-color, #fff); }",
+  ".inst-group { display: flex; align-items: center; gap: 4px; background: var(--card-background-color, #1c1c1c); border: 1px solid var(--divider-color, rgba(255, 255, 255, 0.2)); border-radius: 6px; padding: 0 6px; }",
+  ".inst-group span { font-size: 12px; color: var(--secondary-text-color, #9e9e9e); white-space: nowrap; }",
+  ".inst-in { width: 34px; padding: 6px 2px; border: none; background: transparent; color: var(--primary-text-color, #fff); font-size: 13px; text-align: center; }",
+  ".inst-in:focus { outline: none; }",
+  ".add-form .btn { padding: 6px 12px; background: var(--primary-color, #03a9f4); color: var(--text-primary-color, #fff); border: none; border-radius: 6px; font-size: 13px; font-weight: 500; cursor: pointer; white-space: nowrap; }",
+  ".add-form .btn.cancel { background: var(--secondary-background-color, #444); color: var(--primary-text-color, #fff); }",
+  ".add-form .btn:hover { opacity: 0.9; }",
+  ".list { list-style: none; margin: 0; padding: 0; }",
+  ".item, .debt { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-bottom: 1px solid var(--divider-color, rgba(255, 255, 255, 0.08)); }",
+  ".item.editing, .debt.editing { background: rgba(3, 169, 244, 0.12); }",
+  ".item:last-child, .debt:last-child { border-bottom: none; }",
+  ".chk-btn { width: 18px; height: 18px; flex: 0 0 18px; border-radius: 4px; border: 1.5px solid var(--secondary-text-color, #9e9e9e); background: transparent; color: #fff; font-size: 12px; font-weight: bold; display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0; }",
+  ".chk-btn.checked { background: var(--primary-color, #03a9f4); border-color: var(--primary-color, #03a9f4); }",
+  ".name { flex: 1 1 auto; font-size: 14px; min-width: 0; word-break: break-word; cursor: pointer; }",
+  ".name.done { text-decoration: line-through; opacity: 0.5; }",
+  ".q { color: var(--secondary-text-color, #9e9e9e); font-size: 12px; white-space: nowrap; }",
+  ".cat { font-size: 11px; padding: 2px 6px; border-radius: 4px; background: var(--secondary-background-color, rgba(255, 255, 255, 0.08)); color: var(--secondary-text-color, #bdbdbd); flex: 0 0 auto; }",
+  ".inst-badge { font-size: 11px; padding: 1px 6px; border-radius: 4px; background: rgba(3, 169, 244, 0.18); color: #4fc3f7; font-weight: 600; margin-left: 6px; white-space: nowrap; }",
+  ".pay-btn { background: rgba(76, 175, 80, 0.16); border: 1px solid rgba(76, 175, 80, 0.4); color: #81c784; font-size: 11px; font-weight: 600; padding: 3px 7px; border-radius: 4px; cursor: pointer; white-space: nowrap; }",
+  ".pay-btn:hover { background: rgba(76, 175, 80, 0.28); }",
+  ".edit-btn, .del { background: none; border: none; cursor: pointer; font-size: 15px; line-height: 1; padding: 4px 6px; border-radius: 4px; }",
+  ".edit-btn { color: var(--primary-color, #03a9f4); }",
+  ".edit-btn:hover { background: rgba(3, 169, 244, 0.15); }",
+  ".del { color: var(--error-color, #db4437); font-size: 17px; }",
+  ".del:hover { background: rgba(219, 68, 55, 0.15); }",
+  ".debt-main { flex: 1 1 auto; min-width: 0; }",
+  ".debt-head { display: flex; justify-content: space-between; align-items: center; font-size: 14px; gap: 8px; }",
+  ".debt-title-wrap { display: flex; align-items: center; flex-wrap: wrap; min-width: 0; }",
+  ".nom { font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }",
+  ".note { font-size: 12px; color: var(--secondary-text-color, #9e9e9e); margin-top: 2px; }",
+  ".note.urgent { color: var(--warning-color, #ffb74d); font-weight: 500; }",
+  ".num { text-align: right; font-variant-numeric: tabular-nums; }",
+  "table { width: 100%; border-collapse: collapse; font-size: 13px; background: var(--secondary-background-color, rgba(255, 255, 255, 0.02)); }",
+  "td { padding: 6px 10px; border-top: 1px solid var(--divider-color, rgba(255, 255, 255, 0.12)); }",
+  ".total-bar { display: flex; justify-content: space-between; align-items: center; padding: 11px 14px; background: var(--primary-color, #03a9f4); color: var(--text-primary-color, #fff); font-weight: 600; border-top: 1px solid var(--divider-color, rgba(255, 255, 255, 0.12)); }",
+  ".total-bar h3 { margin: 0; font-size: 14px; font-weight: 600; }",
+  ".empty { padding: 12px; font-size: 12px; color: var(--secondary-text-color, #9e9e9e); text-align: center; }",
+].join("\n");
 class NdlongShopCard extends HTMLElement {
   constructor() {
     super();
-    this._config = {};
+    this._title = "Daftar Belanja & Hutang";
     this._entityIds = [...DEFAULT_ENTITIES];
     this._hass = null;
     this._root = null;
-    this._listenersAttached = false;
-    this._renderQueued = false;
+    this._shellBuilt = false;
     this._lastSignature = "";
+    this._lastShoppingCatsSig = "";
+    this._lastDebtCatsSig = "";
     this._editShoppingId = null;
     this._editDebtId = null;
+    this._listenersAttached = false;
+    this._optimisticDone = new Map();
   }
 
-  getCardType() {
-    return "custom:custom-shopping-and-debt-list";
-  }
-
-  getConfigElement() {
-    return null;
-  }
-
+  getCardType() { return "custom:custom-shopping-and-debt-list"; }
+  getConfigElement() { return null; }
   getStubConfig() {
-    return {
-      entities: [...DEFAULT_ENTITIES],
-      title: "Daftar Belanja & Hutang",
-    };
+    return { entities: [...DEFAULT_ENTITIES], title: "Daftar Belanja & Hutang" };
   }
 
   setConfig(config) {
-    this._config = { ...(config || {}) };
-
-    const entities = Array.isArray(this._config.entities)
-      ? this._config.entities
-      : [];
-
-    const parsed = entities
-      .map((entity) =>
-        typeof entity === "string" ? entity : entity?.entity_id,
-      )
-      .filter(Boolean);
-
-    this._entityIds = parsed.length ? parsed : [...DEFAULT_ENTITIES];
+    this._title = (config && config.title) || "Daftar Belanja & Hutang";
+    const entities = (config && config.entities) || [];
+    const parsed = entities.map((e) => (typeof e === "string" ? e : e && e.entity_id)).filter(Boolean);
+    if (parsed.length) this._entityIds = parsed;
     this._lastSignature = "";
-
     if (this._root) {
-      const heading = this._root.querySelector("[data-card-title]");
-      if (heading) {
-        heading.textContent =
-          this._config.title || "Daftar Belanja & Hutang";
-      }
+      const titleEl = this._root.querySelector("#card-title");
+      if (titleEl) titleEl.textContent = this._title;
     }
-
-    this._scheduleRender();
+    this._render();
   }
 
   set hass(hass) {
     this._hass = hass;
     if (!hass || !hass.states) return;
-
-    const signature = this._entityIds
-      .map((entityId) => {
-        const state = hass.states[entityId];
-        if (!state) return `${entityId}:none`;
-
-        let attributes = "";
-        try {
-          attributes = JSON.stringify(state.attributes || {});
-        } catch (_err) {
-          attributes = "";
-        }
-
-        return `${entityId}:${state.state}:${attributes}`;
+    const sig = this._entityIds
+      .map((id) => {
+        const st = hass.states[id];
+        return st ? id + ":" + st.state + ":" + JSON.stringify(st.attributes) : id + ":none";
       })
       .join("|");
-
-    if (signature === this._lastSignature) return;
-
-    this._lastSignature = signature;
-    this._scheduleRender();
-  }
-
-  get hass() {
-    return this._hass;
-  }
-
-  connectedCallback() {
-    if (!this._root) {
-      this._root = this.attachShadow({ mode: "open" });
+    if (sig !== this._lastSignature) {
+      this._lastSignature = sig;
+      this._optimisticDone.clear();
+      this._render();
     }
-
-    this._buildShell();
-    this._attachListeners();
-    this._scheduleRender();
   }
 
-  disconnectedCallback() {
-    this._renderQueued = false;
-  }
+  get hass() { return this._hass; }
 
-  _scheduleRender() {
-    if (this._renderQueued) return;
-
-    this._renderQueued = true;
-    requestAnimationFrame(() => {
-      this._renderQueued = false;
-      this._renderData();
-    });
-  }
-
-  _buildShell() {
-    if (this._root.querySelector(".card")) return;
-
-    const title = this._config.title || "Daftar Belanja & Hutang";
-
-    this._root.innerHTML = `
-      <style>${STYLES}</style>
-      <div class="wrap card">
-        <h2 data-card-title>${esc(title)}</h2>
-
-        <h3>Belanja</h3>
-        <div data-shopping-summary class="muted"></div>
-        <ul data-shopping-list></ul>
-
-        <form id="add-item-form">
-          <input
-            class="grow"
-            name="name"
-            placeholder="Nama barang"
-            autocomplete="off"
-            required
-          >
-          <input
-            name="qty"
-            placeholder="Jumlah"
-            autocomplete="off"
-            style="width:90px"
-          >
-          <select name="cat" data-shopping-category></select>
-          <button type="submit" class="primary" data-shopping-submit>
-            Tambah
-          </button>
-          <button
-            type="button"
-            class="cancel"
-            data-action="cancel-edit-shopping"
-            data-shopping-cancel
-            hidden
-          >
-            Batal
-          </button>
-        </form>
-
-        <div class="actions">
-          <button
-            type="button"
-            data-action="clear-done-shopping"
-            data-clear-done-shopping
-            hidden
-          >
-            Hapus yang selesai
-          </button>
-          <button
-            type="button"
-            data-action="clear-shopping"
-            data-clear-shopping
-            hidden
-          >
-            Kosongkan daftar belanja
-          </button>
-        </div>
-
-        <h3>Hutang</h3>
-        <div class="total" data-debt-total>Rp 0</div>
-        <div data-debt-categories></div>
-        <ul data-debt-list></ul>
-
-        <form id="add-debt-form">
-          <select name="kategori" data-debt-category></select>
-          <input
-            name="nominal"
-            placeholder="Nominal"
-            inputmode="numeric"
-            autocomplete="off"
-            required
-            style="width:110px"
-          >
-          <input
-            class="grow"
-            name="catatan"
-            placeholder="Catatan"
-            autocomplete="off"
-          >
-          <input
-            name="due_date"
-            type="date"
-            style="width:140px"
-          >
-          <button type="submit" class="primary" data-debt-submit>
-            Tambah
-          </button>
-          <button
-            type="button"
-            class="cancel"
-            data-action="cancel-edit-debt"
-            data-debt-cancel
-            hidden
-          >
-            Batal
-          </button>
-        </form>
-
-        <div class="actions">
-          <button
-            type="button"
-            data-action="clear-debt"
-            data-clear-debt
-            hidden
-          >
-            Kosongkan daftar utang
-          </button>
-        </div>
-      </div>
-    `;
-  }
-
-  _entityState(suffix, fallbackIndex) {
-    if (!this._hass || !this._hass.states) return null;
-
-    const found = this._entityIds.find((entityId) =>
-      entityId.endsWith(suffix),
-    );
-    const target = found || this._entityIds[fallbackIndex];
-
-    if (!target) return null;
-    return this._hass.states[target] || null;
+  _findEntity(suffix, fallbackIndex) {
+    const found = this._entityIds.find((id) => id.endsWith(suffix));
+    const targetId = found || this._entityIds[fallbackIndex] || "";
+    if (!this._hass || !this._hass.states || !targetId) return null;
+    return this._hass.states[targetId] || null;
   }
 
   _shopping() {
-    const state = this._entityState("shopping_list", 0);
-    if (!state || !state.attributes) return [];
-
-    const list =
-      state.attributes.list ||
-      state.attributes.items ||
-      state.attributes.shopping_list;
-
-    return Array.isArray(list) ? list : [];
-  }
-
-  _debt() {
-    const state = this._entityState("debt_list", 2);
-    if (!state || !state.attributes) return [];
-
-    const list =
-      state.attributes.debt_list ||
-      state.attributes.list ||
-      state.attributes.entries;
-
-    return Array.isArray(list) ? list : [];
+    const st = this._findEntity("shopping_list", 0);
+    if (!st || !st.attributes) return [];
+    const list = st.attributes.list || st.attributes.items || st.attributes.shopping_list;
+    if (!Array.isArray(list)) return [];
+    return list.map((it) => {
+      const idStr = String(it.id);
+      const done = this._optimisticDone.has(idStr) ? this._optimisticDone.get(idStr) : Boolean(it.done);
+      return Object.assign({}, it, { done: done });
+    });
   }
 
   _total() {
-    const state =
-      this._entityState("total_debt", 1) ||
-      this._entityState("debt_total", 1);
-    const total = state ? Number(state.state) : 0;
+    const st = this._findEntity("total_debt", 1) || this._findEntity("debt_total", 1);
+    const n = st ? Number(st.state) : 0;
+    return Number.isFinite(n) ? n : 0;
+  }
 
-    return Number.isFinite(total) ? total : 0;
+  _parseDueDate(dueStr) {
+    if (!dueStr) return null;
+    const clean = String(dueStr).split("T").trim();
+    const parts = clean.split("-");
+    if (parts.length !== 3) return null;
+    const year = Number(parts);
+    const month = Number(parts) - 1;
+    const day = Number(parts);
+    if (!Number.isFinite(year) || !Number.isFinite(month) || !Number.isFinite(day)) return null;
+    return new Date(year, month, day);
+  }
+
+  _addOneMonth(dueStr) {
+    const d = this._parseDueDate(dueStr);
+    if (!d) return "";
+    const targetMonth = d.getMonth() + 1;
+    const next = new Date(d.getFullYear(), targetMonth, d.getDate());
+    // Tangani akhir bulan (misal 31 Jan -> 28 Feb)
+    if (next.getMonth() !== targetMonth % 12) {
+      next.setDate(0);
+    }
+    const y = next.getFullYear();
+    const m = String(next.getMonth() + 1).padStart(2, "0");
+    const day = String(next.getDate()).padStart(2, "0");
+    return y + "-" + m + "-" + day;
+  }
+
+  _parseNoteAndInstallment(rawCatatan) {
+    const text = String(rawCatatan || "");
+    const match = text.match(/\[cicilan:(\d+)\/(\d+)\]/i);
+    if (!match) {
+      return { cleanNote: text.trim(), cur: null, total: null };
+    }
+    const cleanNote = text.replace(match, "").trim();
+    return {
+      cleanNote: cleanNote,
+      cur: Number(match),
+      total: Number(match),
+    };
+  }
+
+  _formatNoteWithInstallment(cleanNote, cur, total) {
+    const base = String(cleanNote || "").trim();
+    const c = Number(cur);
+    const t = Number(total);
+    if (Number.isFinite(c) && Number.isFinite(t) && c > 0 && t > 0) {
+      const tag = "[cicilan:" + c + "/" + t + "]";
+      return base ? tag + " " + base : tag;
+    }
+    return base;
+  }
+
+  _debtList() {
+    const st = this._findEntity("debt_list", 2);
+    if (!st || !st.attributes) return [];
+    const list = st.attributes.debt_list || st.attributes.list || st.attributes.entries;
+    if (!Array.isArray(list)) return [];
+
+    return list.slice().sort((a, b) => {
+      const da = this._parseDueDate(a && a.due_date);
+      const db = this._parseDueDate(b && b.due_date);
+      if (da && db) return da.getTime() - db.getTime();
+      if (da && !db) return -1;
+      if (!da && db) return 1;
+      return 0;
+    });
+  }
+
+  _upcoming5DaysTotal(sortedDebtList) {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const limit = new Date(today.getTime() + 5 * 24 * 60 * 60 * 1000);
+
+    return sortedDebtList.reduce((sum, d) => {
+      const due = this._parseDueDate(d && d.due_date);
+      if (!due) return sum;
+      if (due.getTime() <= limit.getTime()) {
+        return sum + (Number(d.nominal) || 0);
+      }
+      return sum;
+    }, 0);
   }
 
   _byKategori() {
-    const state =
-      this._entityState("debt_by_category", 3) ||
-      this._entityState("debt_by_kategori", 3);
-
-    if (!state || !state.attributes) return {};
-
-    const categories =
-      state.attributes.by_kategori ||
-      state.attributes.by_category ||
-      state.attributes;
-
-    if (!categories || typeof categories !== "object") return {};
-    if (Array.isArray(categories)) return {};
-
-    const cleaned = {};
-    Object.keys(categories).forEach((key) => {
-      if (
-        key !== "friendly_name" &&
-        key !== "icon" &&
-        key !== "unit_of_measurement" &&
-        typeof categories[key] === "number"
-      ) {
-        cleaned[key] = categories[key];
-      }
-    });
-
-    return cleaned;
+    const st = this._findEntity("debt_by_category", 3) || this._findEntity("debt_by_kategori", 3);
+    if (!st || !st.attributes) return {};
+    const cats = st.attributes.by_kategori || st.attributes.by_category || st.attributes;
+    if (cats && typeof cats === "object" && !Array.isArray(cats)) {
+      const cleaned = {};
+      Object.keys(cats).forEach((k) => {
+        if (k !== "friendly_name" && k !== "icon" && k !== "unit_of_measurement" && typeof cats[k] === "number") {
+          cleaned[k] = cats[k];
+        }
+      });
+      return cleaned;
+    }
+    return {};
   }
 
   _shoppingCategories() {
-    const categories = new Set(DEFAULT_SHOPPING_CATS);
-
-    this._shopping().forEach((item) => {
-      if (item?.cat) categories.add(item.cat);
-    });
-
-    return Array.from(categories);
+    const seen = new Set(DEFAULT_SHOPPING_CATS);
+    this._shopping().forEach((it) => { if (it.cat) seen.add(it.cat); });
+    return Array.from(seen);
   }
 
   _debtCategories() {
-    const categories = new Set(DEFAULT_DEBT_CATS);
-
-    Object.keys(this._byKategori()).forEach((key) => categories.add(key));
-
-    this._debt().forEach((entry) => {
-      if (entry?.kategori) categories.add(entry.kategori);
-    });
-
-    return Array.from(categories);
+    const seen = new Set(DEFAULT_DEBT_CATS);
+    Object.keys(this._byKategori()).forEach((k) => seen.add(k));
+    return Array.from(seen);
   }
 
-  _renderData() {
-    if (!this.isConnected || !this._root) return;
+  _buildShell() {
+    if (this._shellBuilt && this._root) return;
+    const root = this._root || (this._root = this.attachShadow({ mode: "open" }));
+    this._shellBuilt = true;
+    root.innerHTML = [
+      "<style>" + CARD_STYLES + "</style>",
+      "<ha-card>",
+      '  <h2 id="card-title">' + esc(this._title) + "</h2>",
+      '  <div class="sub">Belanja &amp; hutang &middot; simpan di HA Store</div>',
+      '  <div class="grid">',
+      '    <div class="panel">',
+      '      <div class="panel-title">',
+      '        <span id="shopping-count">Shopping List (0 item)</span>',
+      '        <button type="button" id="btn-clear-done" class="mini-btn" data-action="clear-done" style="display:none;">Hapus Selesai (0)</button>',
+      "      </div>",
+      '      <div class="add-form">',
+      '        <input id="name-add" class="in" placeholder="Nama item" autocomplete="off" />',
+      '        <input id="qty-add" class="in" placeholder="Qty (opsional)" autocomplete="off" />',
+      '        <select id="cat-shopping" class="in"></select>',
+      '        <button type="button" id="btn-submit-shopping" data-action="add-shopping" class="btn">+ Tambah</button>',
+      '        <button type="button" id="btn-cancel-shopping" data-action="cancel-edit-shopping" class="btn cancel" style="display:none;">Batal</button>',
+      "      </div>",
+      '      <ul id="shopping-list-ul" class="list"></ul>',
+      "    </div>",
+      '    <div class="panel">',
+      '      <div class="panel-title">',
+      "        <span>Utang</span>",
+      '        <span id="debt-panel-total" class="due-badge">Jatuh Tempo &le;5 Hari: Rp 0</span>',
+      "      </div>",
+      '      <div class="add-form">',
+      '        <select id="cat-debt" class="in"></select>',
+      '        <input id="amount-add" class="in" placeholder="Nominal" inputmode="numeric" autocomplete="off" />',
+      '        <input id="note-add" class="in" placeholder="Catatan (opsional)" autocomplete="off" />',
+      '        <div class="inst-group" title="Opsional: Cicilan ke berapa / total cicilan">',
+      "          <span>Cicilan</span>",
+      '          <input id="inst-cur" class="inst-in" placeholder="1" inputmode="numeric" autocomplete="off" />',
+      "          <span>/</span>",
+      '          <input id="inst-tot" class="inst-in" placeholder="3" inputmode="numeric" autocomplete="off" />',
+      "        </div>",
+      '        <input id="due-add" class="in" type="date" title="Jatuh tempo" />',
+      '        <button type="button" id="btn-submit-debt" data-action="add-debt" class="btn">+ Tambah</button>',
+      '        <button type="button" id="btn-cancel-debt" data-action="cancel-edit-debt" class="btn cancel" style="display:none;">Batal</button>',
+      "      </div>",
+      '      <ul id="debt-list-ul" class="list"></ul>',
+      '      <table id="debt-cat-table"></table>',
+      '      <div class="total-bar">',
+      "        <h3>Total Utang</h3>",
+      '        <span id="debt-bar-total">Rp 0</span>',
+      "      </div>",
+      "    </div>",
+      "  </div>",
+      "</ha-card>",
+    ].join("\n");
+    this._setupListeners();
+  }
+  _updateSelectOptions(selectEl, categories, lastSigProp) {
+    if (!selectEl) return;
+    const sig = categories.join("|");
+    if (this[lastSigProp] === sig && selectEl.options.length > 0) return;
+    const currentVal = selectEl.value;
+    this[lastSigProp] = sig;
+    selectEl.innerHTML = categories.map((c) => '<option value="' + esc(c) + '">' + esc(c) + "</option>").join("");
+    if (currentVal && categories.includes(currentVal)) selectEl.value = currentVal;
+  }
+
+  _render() {
+    this._buildShell();
+    const root = this._root;
+    if (!root) return;
 
     const shopping = this._shopping();
-    const debt = this._debt();
+    const cats = this._byKategori();
+    const debtList = this._debtList();
     const total = this._total();
-    const byKategori = this._byKategori();
-    const doneCount = shopping.filter((item) => Boolean(item?.done)).length;
+    const upcomingTotal = this._upcoming5DaysTotal(debtList);
 
-    this._updateSelect(
-      this._root.querySelector("[data-shopping-category]"),
-      this._shoppingCategories(),
-    );
-    this._updateSelect(
-      this._root.querySelector("[data-debt-category]"),
-      this._debtCategories(),
-    );
+    const totalLabel = "Rp " + Math.round(total).toLocaleString("id-ID");
+    const upcomingLabel = "Rp " + Math.round(upcomingTotal).toLocaleString("id-ID");
+    const doneCount = shopping.filter((it) => it.done).length;
 
-    const summary = this._root.querySelector("[data-shopping-summary]");
-    if (summary) {
-      summary.textContent = shopping.length
-        ? `${shopping.length} item, ${doneCount} selesai`
-        : "Belanja kosong.";
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const limit5Days = new Date(today.getTime() + 5 * 24 * 60 * 60 * 1000);
+
+    this._updateSelectOptions(root.querySelector("#cat-shopping"), this._shoppingCategories(), "_lastShoppingCatsSig");
+    this._updateSelectOptions(root.querySelector("#cat-debt"), this._debtCategories(), "_lastDebtCatsSig");
+
+    const countEl = root.querySelector("#shopping-count");
+    if (countEl) countEl.textContent = "Shopping List (" + shopping.length + " item)";
+
+    const clearDoneBtn = root.querySelector("#btn-clear-done");
+    if (clearDoneBtn) {
+      clearDoneBtn.style.display = doneCount > 0 ? "inline-block" : "none";
+      if (doneCount > 0) clearDoneBtn.textContent = "Hapus Selesai (" + doneCount + ")";
     }
 
-    const shoppingList = this._root.querySelector(
-      "[data-shopping-list]",
-    );
-    if (shoppingList) {
-      shoppingList.innerHTML = shopping.length
-        ? shopping.map((item) => this._shoppingRow(item)).join("")
-        : "";
+    const shoppingUl = root.querySelector("#shopping-list-ul");
+    if (shoppingUl) {
+      shoppingUl.innerHTML = shopping.length
+        ? shopping.map((it) => {
+            const isEdit = String(this._editShoppingId) === String(it.id) ? "editing" : "";
+            const chkClass = it.done ? "checked" : "";
+            const chkMark = it.done ? "&#10003;" : "";
+            const doneClass = it.done ? "done" : "";
+            const qtyHtml = it.qty ? '<span class="q">&times; ' + esc(it.qty) + "</span>" : "";
+            const idEsc = esc(it.id);
+            return '<li class="item ' + isEdit + '" data-id="' + idEsc + '">' +
+              '<button type="button" class="chk-btn ' + chkClass + '" data-action="toggle-shopping" data-id="' + idEsc + '" title="Tandai selesai">' + chkMark + "</button>" +
+              '<span class="name ' + doneClass + '" data-action="toggle-shopping" data-id="' + idEsc + '">' + esc(it.name) + "</span>" +
+              qtyHtml +
+              '<span class="cat">' + esc(it.cat || "") + "</span>" +
+              '<button type="button" class="edit-btn" title="Edit" data-action="edit-shopping" data-id="' + idEsc + '">&#9998;</button>' +
+              '<button type="button" class="del" title="Hapus" data-action="del-shopping" data-id="' + idEsc + '">&times;</button>' +
+              "</li>";
+          }).join("")
+        : '<li class="empty">Kosong &middot; tambah item di atas</li>';
     }
 
-    const debtList = this._root.querySelector("[data-debt-list]");
-    if (debtList) {
-      debtList.innerHTML = debt.length
-        ? debt.map((entry) => this._debtRow(entry)).join("")
-        : "";
+    const debtUl = root.querySelector("#debt-list-ul");
+    if (debtUl) {
+      debtUl.innerHTML = debtList.length
+        ? debtList.map((d) => {
+            const isEdit = String(this._editDebtId) === String(d.id) ? "editing" : "";
+            const idEsc = esc(d.id);
+            const parsedNote = this._parseNoteAndInstallment(d.catatan);
+            const hasInst = parsedNote.cur !== null && parsedNote.total !== null;
+            const instBadge = hasInst
+              ? '<span class="inst-badge">Cicilan ' + parsedNote.cur + "/" + parsedNote.total + "</span>"
+              : "";
+            const payBtn = hasInst
+              ? '<button type="button" class="pay-btn" title="Tandai cicilan ini dibayar (+1 &amp; majukan tanggal 1 bulan)" data-action="pay-installment" data-id="' + idEsc + '">&#10003; Bayar</button>'
+              : "";
+
+            const dueText = d.due_date ? String(d.due_date).split("T") : "";
+            const dueObj = this._parseDueDate(d.due_date);
+            const isUrgent = dueObj && dueObj.getTime() <= limit5Days.getTime();
+            const hasNote = parsedNote.cleanNote || dueText;
+            const subNote = hasNote
+              ? '<div class="note ' + (isUrgent ? "urgent" : "") + '">' + esc(parsedNote.cleanNote || "") + (dueText ? " (" + esc(dueText) + ")" : "") + "</div>"
+              : "";
+
+            return '<li class="debt ' + isEdit + '" data-id="' + idEsc + '">' +
+              '<div class="debt-main"><div class="debt-head">' +
+              '<div class="debt-title-wrap"><strong>' + esc(d.kategori || "Lainnya") + "</strong>" + instBadge + "</div>" +
+              '<span class="nom">Rp ' + (Number(d.nominal) || 0).toLocaleString("id-ID") + "</span></div>" + subNote + "</div>" +
+              payBtn +
+              '<button type="button" class="edit-btn" title="Edit" data-action="edit-debt" data-id="' + idEsc + '">&#9998;</button>' +
+              '<button type="button" class="del" title="Hapus" data-action="del-debt" data-id="' + idEsc + '">&times;</button>' +
+              "</li>";
+          }).join("")
+        : '<li class="empty">Belum ada utang &middot; tambah di atas</li>';
     }
 
-    const totalElement = this._root.querySelector("[data-debt-total]");
-    if (totalElement) {
-      totalElement.textContent = `Rp ${Math.round(total).toLocaleString(
-        "id-ID",
-      )}`;
+    const catTable = root.querySelector("#debt-cat-table");
+    if (catTable) {
+      catTable.innerHTML = Object.keys(cats)
+        .map((k) => "<tr><td>" + esc(k) + '</td><td class="num">Rp ' + (Number(cats[k]) || 0).toLocaleString("id-ID") + "</td></tr>")
+        .join("");
     }
 
-    const categoryElement = this._root.querySelector(
-      "[data-debt-categories]",
-    );
-    if (categoryElement) {
-      const categoryNames = Object.keys(byKategori);
-      categoryElement.innerHTML = categoryNames.length
-        ? categoryNames
-            .map(
-              (key) =>
-                `<div class="cat-row"><span>${esc(key)}</span>: <b>Rp ${Number(
-                  byKategori[key],
-                ).toLocaleString("id-ID")}</b></div>`,
-            )
-            .join("")
-        : '<div class="muted">Belum ada utang.</div>';
-    }
+    const panelTotalEl = root.querySelector("#debt-panel-total");
+    if (panelTotalEl) panelTotalEl.textContent = "Jatuh Tempo <=5 Hari: " + upcomingLabel;
 
-    const clearDone = this._root.querySelector(
-      "[data-clear-done-shopping]",
-    );
-    if (clearDone) clearDone.hidden = doneCount === 0;
-
-    const clearShopping = this._root.querySelector(
-      "[data-clear-shopping]",
-    );
-    if (clearShopping) clearShopping.hidden = shopping.length === 0;
-
-    const clearDebt = this._root.querySelector("[data-clear-debt]");
-    if (clearDebt) clearDebt.hidden = debt.length === 0;
+    const barTotalEl = root.querySelector("#debt-bar-total");
+    if (barTotalEl) barTotalEl.textContent = totalLabel;
   }
-
-  _updateSelect(select, categories) {
-    if (!select) return;
-
-    const selected = select.value;
-    const options = categories
-      .map(
-        (category) =>
-          `<option value="${esc(category)}">${esc(category)}</option>`,
-      )
-      .join("");
-
-    select.innerHTML = options;
-
-    if (categories.includes(selected)) {
-      select.value = selected;
-    }
-  }
-
-  _shoppingRow(item) {
-    const id = esc(item?.id);
-    const done = Boolean(item?.done);
-
-    return `
-      <li class="item ${done ? "done" : ""}">
-        <input
-          type="checkbox"
-          data-action="toggle"
-          data-id="${id}"
-          ${done ? "checked" : ""}
-          aria-label="Tandai selesai"
-        >
-        <span class="name">${esc(item?.name)}</span>
-        <span class="qty">${esc(item?.qty)}</span>
-        <span class="cat">${esc(item?.cat)}</span>
-        <button
-          type="button"
-          data-action="edit-shopping"
-          data-id="${id}"
-          title="Edit"
-        >
-          &#9998;
-        </button>
-        <button
-          type="button"
-          data-action="remove-shopping"
-          data-id="${id}"
-          title="Hapus"
-        >
-          &#215;
-        </button>
-      </li>
-    `;
-  }
-
-  _debtRow(entry) {
-    const id = esc(entry?.id);
-    const due = entry?.due_date
-      ? ` · jatuh tempo ${esc(String(entry.due_date).split("T")[0])}`
-      : "";
-    const note = entry?.catatan ? ` (${esc(entry.catatan)})` : "";
-
-    return `
-      <li class="item">
-        <span class="name">
-          ${esc(entry?.kategori)}${note}${due}
-        </span>
-        <span class="qty">
-          Rp ${Number(entry?.nominal || 0).toLocaleString("id-ID")}
-        </span>
-        <button
-          type="button"
-          data-action="edit-debt"
-          data-id="${id}"
-          title="Edit"
-        >
-          &#9998;
-        </button>
-        <button
-          type="button"
-          data-action="remove-debt"
-          data-id="${id}"
-          title="Hapus"
-        >
-          &#215;
-        </button>
-      </li>
-    `;
-  }
-
-  _attachListeners() {
-    if (this._listenersAttached || !this._root) return;
-
+  _setupListeners() {
+    const root = this._root;
+    if (!root || this._listenersAttached) return;
     this._listenersAttached = true;
 
-    this._root.addEventListener("click", (event) => {
-      const target = event.target;
-      if (!target?.closest) return;
+    root.addEventListener("click", async (ev) => {
+      const el = ev.target.closest("[data-action]");
+      if (!el) return;
+      ev.preventDefault();
+      ev.stopPropagation();
+      const action = el.dataset.action;
+      const id = String(el.dataset.id || "");
 
-      const element = target.closest("[data-action]");
-      if (!element) return;
-
-      event.preventDefault();
-
-      const action = element.dataset.action;
-      const id = element.dataset.id || "";
-
-      if (action === "toggle" && id) {
-        this._call("custom_shopping_and_debt_list_toggle_shopping", {
-          item_id: id,
-        });
-      } else if (action === "remove-shopping" && id) {
-        this._call("custom_shopping_and_debt_list_remove_shopping", {
-          item_id: id,
-        });
-      } else if (action === "remove-debt" && id) {
-        this._call("custom_shopping_and_debt_list_remove_debt", {
-          entry_id: id,
-        });
-      } else if (action === "clear-shopping") {
-        this._call("custom_shopping_and_debt_list_clear_shopping", {});
-      } else if (action === "clear-debt") {
-        this._call("custom_shopping_and_debt_list_clear_debt", {});
-      } else if (action === "clear-done-shopping") {
-        this._clearDoneShopping();
+      if (action === "toggle-shopping" && id) {
+        const current = this._shopping().find((it) => String(it.id) === id);
+        this._optimisticDone.set(id, current ? !current.done : true);
+        this._render();
+        await this._call("custom_shopping_and_debt_list_toggle_shopping", { item_id: id });
+        this._lastSignature = "";
+      } else if (action === "add-shopping") {
+        const name = this._val("name-add");
+        if (!name) return;
+        const qty = this._val("qty-add");
+        const cat = this._val("cat-shopping") || "Kebutuhan";
+        if (this._editShoppingId) {
+          const oldId = this._editShoppingId;
+          this._editShoppingId = null;
+          await this._call("custom_shopping_and_debt_list_remove_shopping", { item_id: String(oldId) });
+        }
+        await this._call("custom_shopping_and_debt_list_add_shopping", { name: name, qty: qty, cat: cat });
+        this._setVal("name-add", "");
+        this._setVal("qty-add", "");
+        root.querySelector("#btn-submit-shopping").textContent = "+ Tambah";
+        root.querySelector("#btn-cancel-shopping").style.display = "none";
+        this._lastSignature = "";
       } else if (action === "edit-shopping") {
-        this._startShoppingEdit(id);
+        const item = this._shopping().find((it) => String(it.id) === id);
+        if (!item) return;
+        this._editShoppingId = item.id;
+        this._setVal("name-add", item.name || "");
+        this._setVal("qty-add", item.qty || "");
+        this._setVal("cat-shopping", item.cat || "Kebutuhan");
+        root.querySelector("#btn-submit-shopping").textContent = "Simpan";
+        root.querySelector("#btn-cancel-shopping").style.display = "inline-block";
+        this._render();
+        root.querySelector("#name-add")?.focus();
       } else if (action === "cancel-edit-shopping") {
-        this._cancelShoppingEdit();
+        this._editShoppingId = null;
+        this._setVal("name-add", "");
+        this._setVal("qty-add", "");
+        root.querySelector("#btn-submit-shopping").textContent = "+ Tambah";
+        root.querySelector("#btn-cancel-shopping").style.display = "none";
+        this._render();
+      } else if (action === "clear-done") {
+        for (const it of this._shopping().filter((i) => i.done)) {
+          await this._call("custom_shopping_and_debt_list_remove_shopping", { item_id: String(it.id) });
+        }
+        this._lastSignature = "";
+      } else if (action === "add-debt") {
+        const kategori = this._val("cat-debt");
+        const nominalRaw = this._val("amount-add").replace(/[^\d.-]/g, "");
+        if (!kategori || !nominalRaw) return;
+        const cleanNote = this._val("note-add");
+        const instCur = this._val("inst-cur").replace(/[^\d]/g, "");
+        const instTot = this._val("inst-tot").replace(/[^\d]/g, "");
+        const catatan = this._formatNoteWithInstallment(cleanNote, instCur, instTot);
+        const due_date = this._val("due-add");
+
+        if (this._editDebtId) {
+          const oldId = this._editDebtId;
+          this._editDebtId = null;
+          await this._call("custom_shopping_and_debt_list_remove_debt", { entry_id: String(oldId) });
+        }
+        await this._call("custom_shopping_and_debt_list_add_debt", {
+          kategori: kategori, nominal: String(nominalRaw), catatan: catatan, due_date: due_date,
+        });
+        this._clearDebtForm();
+        this._lastSignature = "";
+      } else if (action === "pay-installment") {
+        const debt = this._debtList().find((d) => String(d.id) === id);
+        if (!debt) return;
+        const parsed = this._parseNoteAndInstallment(debt.catatan);
+        if (parsed.cur === null || parsed.total === null) return;
+
+        // Jika sudah cicilan terakhir (misal 3/3), hapus utang karena sudah lunas
+        if (parsed.cur >= parsed.total) {
+          await this._call("custom_shopping_and_debt_list_remove_debt", { entry_id: String(debt.id) });
+          this._lastSignature = "";
+          return;
+        }
+
+        const nextCur = parsed.cur + 1;
+        const nextNote = this._formatNoteWithInstallment(parsed.cleanNote, nextCur, parsed.total);
+        const nextDue = debt.due_date ? this._addOneMonth(debt.due_date) : "";
+
+        await this._call("custom_shopping_and_debt_list_remove_debt", { entry_id: String(debt.id) });
+        await this._call("custom_shopping_and_debt_list_add_debt", {
+          kategori: debt.kategori || "Lainnya",
+          nominal: String(debt.nominal || 0),
+          catatan: nextNote,
+          due_date: nextDue,
+        });
+        this._lastSignature = "";
       } else if (action === "edit-debt") {
-        this._startDebtEdit(id);
+        const debt = this._debtList().find((d) => String(d.id) === id);
+        if (!debt) return;
+        this._editDebtId = debt.id;
+        const parsed = this._parseNoteAndInstallment(debt.catatan);
+        this._setVal("cat-debt", debt.kategori || "Lainnya");
+        this._setVal("amount-add", String(debt.nominal || ""));
+        this._setVal("note-add", parsed.cleanNote);
+        this._setVal("inst-cur", parsed.cur !== null ? String(parsed.cur) : "");
+        this._setVal("inst-tot", parsed.total !== null ? String(parsed.total) : "");
+        this._setVal("due-add", debt.due_date ? String(debt.due_date).split("T") : "");
+        root.querySelector("#btn-submit-debt").textContent = "Simpan";
+        root.querySelector("#btn-cancel-debt").style.display = "inline-block";
+        this._render();
+        root.querySelector("#amount-add")?.focus();
       } else if (action === "cancel-edit-debt") {
-        this._cancelDebtEdit();
-      }
-    });
-
-    this._root.addEventListener("submit", (event) => {
-      const form = event.target;
-      if (!form?.id) return;
-
-      event.preventDefault();
-
-      if (form.id === "add-item-form") {
-        this._submitShopping(form);
-      } else if (form.id === "add-debt-form") {
-        this._submitDebt(form);
+        this._editDebtId = null;
+        this._clearDebtForm();
+        this._render();
+      } else if (action === "del-shopping") {
+        await this._call("custom_shopping_and_debt_list_remove_shopping", { item_id: id });
+        this._lastSignature = "";
+      } else if (action === "del-debt") {
+        await this._call("custom_shopping_and_debt_list_remove_debt", { entry_id: id });
+        this._lastSignature = "";
       }
     });
   }
 
-  async _submitShopping(form) {
-    const formData = new FormData(form);
-    const name = String(formData.get("name") || "").trim();
-    if (!name) return;
-
-    const qty = String(formData.get("qty") || "").trim();
-    const category =
-      String(formData.get("cat") || "Kebutuhan").trim() || "Kebutuhan";
-
-    if (this._editShoppingId) {
-      const oldId = String(this._editShoppingId);
-      this._editShoppingId = null;
-
-      await this._call(
-        "custom_shopping_and_debt_list_remove_shopping",
-        { item_id: oldId },
-      );
-    }
-
-    await this._call("custom_shopping_and_debt_list_add_shopping", {
-      name,
-      qty,
-      cat: category,
-    });
-
-    form.reset();
-    this._setShoppingEditMode(false);
-    this._lastSignature = "";
+  _clearDebtForm() {
+    this._setVal("amount-add", "");
+    this._setVal("note-add", "");
+    this._setVal("inst-cur", "");
+    this._setVal("inst-tot", "");
+    this._setVal("due-add", "");
+    const btnSub = this._root && this._root.querySelector("#btn-submit-debt");
+    const btnCan = this._root && this._root.querySelector("#btn-cancel-debt");
+    if (btnSub) btnSub.textContent = "+ Tambah";
+    if (btnCan) btnCan.style.display = "none";
   }
 
-  async _submitDebt(form) {
-    const formData = new FormData(form);
-    const kategori = String(formData.get("kategori") || "").trim();
-    const nominal = String(formData.get("nominal") || "")
-      .replace(/[^\d.-]/g, "")
-      .trim();
-
-    if (!kategori || !nominal) return;
-
-    const catatan = String(formData.get("catatan") || "").trim();
-    const dueDate = String(formData.get("due_date") || "").trim();
-
-    if (this._editDebtId) {
-      const oldId = String(this._editDebtId);
-      this._editDebtId = null;
-
-      await this._call("custom_shopping_and_debt_list_remove_debt", {
-        entry_id: oldId,
-      });
-    }
-
-    await this._call("custom_shopping_and_debt_list_add_debt", {
-      kategori,
-      nominal,
-      catatan,
-      due_date: dueDate,
-    });
-
-    form.reset();
-    this._setDebtEditMode(false);
-    this._lastSignature = "";
+  _val(id) {
+    const el = this._root && this._root.querySelector("#" + id);
+    return el ? String(el.value || "").trim() : "";
   }
 
-  async _clearDoneShopping() {
-    const doneItems = this._shopping().filter((item) => item?.done);
-
-    for (const item of doneItems) {
-      await this._call("custom_shopping_and_debt_list_remove_shopping", {
-        item_id: String(item.id),
-      });
-    }
-
-    this._lastSignature = "";
-  }
-
-  _startShoppingEdit(id) {
-    const item = this._shopping().find(
-      (entry) => String(entry.id) === String(id),
-    );
-    if (!item) return;
-
-    this._editShoppingId = item.id;
-
-    const form = this._root.querySelector("#add-item-form");
-    if (!form) return;
-
-    form.elements.name.value = item.name || "";
-    form.elements.qty.value = item.qty || "";
-
-    const category = form.elements.cat;
-    if (category) category.value = item.cat || "Kebutuhan";
-
-    this._setShoppingEditMode(true);
-    form.elements.name.focus();
-  }
-
-  _cancelShoppingEdit() {
-    this._editShoppingId = null;
-
-    const form = this._root.querySelector("#add-item-form");
-    if (form) form.reset();
-
-    this._setShoppingEditMode(false);
-  }
-
-  _setShoppingEditMode(editing) {
-    const submit = this._root.querySelector("[data-shopping-submit]");
-    const cancel = this._root.querySelector("[data-shopping-cancel]");
-
-    if (submit) submit.textContent = editing ? "Simpan" : "Tambah";
-    if (cancel) cancel.hidden = !editing;
-  }
-
-  _startDebtEdit(id) {
-    const entry = this._debt().find(
-      (item) => String(item.id) === String(id),
-    );
-    if (!entry) return;
-
-    this._editDebtId = entry.id;
-
-    const form = this._root.querySelector("#add-debt-form");
-    if (!form) return;
-
-    const category = form.elements.kategori;
-    if (category) category.value = entry.kategori || "Lainnya";
-
-    form.elements.nominal.value = String(entry.nominal || "");
-    form.elements.catatan.value = entry.catatan || "";
-    form.elements.due_date.value = entry.due_date
-      ? String(entry.due_date).split("T")[0]
-      : "";
-
-    this._setDebtEditMode(true);
-    form.elements.nominal.focus();
-  }
-
-  _cancelDebtEdit() {
-    this._editDebtId = null;
-
-    const form = this._root.querySelector("#add-debt-form");
-    if (form) form.reset();
-
-    this._setDebtEditMode(false);
-  }
-
-  _setDebtEditMode(editing) {
-    const submit = this._root.querySelector("[data-debt-submit]");
-    const cancel = this._root.querySelector("[data-debt-cancel]");
-
-    if (submit) submit.textContent = editing ? "Simpan" : "Tambah";
-    if (cancel) cancel.hidden = !editing;
+  _setVal(id, value) {
+    const el = this._root && this._root.querySelector("#" + id);
+    if (el) el.value = value;
   }
 
   async _call(service, data) {
     if (!this._hass) return;
-
-    try {
-      await this._hass.callService(DOMAIN, service, data);
-    } catch (error) {
-      console.error(
-        `custom-shopping-and-debt-list: ${service} failed`,
-        error,
-      );
-    }
+    try { await this._hass.callService(DOMAIN, service, data); }
+    catch (e) { console.warn("custom-shopping-and-debt-list: call failed", service, e); }
   }
+
+  connectedCallback() { this._render(); }
+}
+
+function esc(value) {
+  return String(value ?? "").replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch]);
 }
 
 if (!customElements.get("custom-shopping-and-debt-list")) {
-  customElements.define(
-    "custom-shopping-and-debt-list",
-    NdlongShopCard,
-  );
+  customElements.define("custom-shopping-and-debt-list", NdlongShopCard);
 }
 
 window.customCards = window.customCards || [];
-
-if (
-  !window.customCards.some(
-    (card) => card.type === "custom-shopping-and-debt-list",
-  )
-) {
+if (!window.customCards.some((c) => c.type === "custom-shopping-and-debt-list")) {
   window.customCards.push({
-    type: "custom-shopping-and-debt-list",
-    name: "Daftar Belanja & Utang",
-    description:
-      "Kartu daftar belanja dan hutang untuk Custom Shopping and Debt List.",
-    preview: true,
+    type: "custom:custom-shopping-and-debt-list",
+    name: "Belanja & Utang",
+    description: "Shopping list + debt list with running total",
+    preview: false,
   });
 }
+
+console.info("%c BELANJA & UTANG CARD %c v1.5 ", "color: white; background: #03a9f4; font-weight: bold;", "color: #03a9f4; background: white; font-weight: bold;");
