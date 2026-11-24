@@ -1,0 +1,26 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Custom Shopping and Debt List",
+        "description": "Klik Submit untuk mengaktifkan integrasi. Data disimpan di HA Store (ikut backup)."
+      }
+    },
+    "abort": {
+      "already_configured": "Integrasi sudah dikonfigurasi."
+    },
+    "error": {}
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Pengaturan",
+        "description": "{msg}"
+      },
+      "add_category": {
+        "title": "Tambah kategori utang",
+        "description": "Masukkan nama kategori baru."
+      }
+    }
+  }
+}

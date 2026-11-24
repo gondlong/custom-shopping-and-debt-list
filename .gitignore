@@ -1,0 +1,10 @@
+# Byte-compiled / optimized / cache files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# pytest
+.pytest_cache/
+.pytest_cache/
+test_*.pyc
+*_test.pyc

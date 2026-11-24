@@ -1,0 +1,9 @@
+{
+  "name": "Custom Shopping and Debt List",
+  "domain": "custom_shopping_and_debt_list",
+  "codeowners": ["@gondlong"],
+  "content_in_root": false,
+  "has_icon": true,
+  "issue_tracker": "https://github.com/gondlong/custom-shopping-and-debt-list/issues",
+  "requirements": []
+}

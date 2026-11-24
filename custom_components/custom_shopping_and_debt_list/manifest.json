@@ -1,0 +1,18 @@
+{
+  "domain": "custom_shopping_and_debt_list",
+  "name": "Custom Shopping and Debt List",
+  "codeowners": [
+    "@gondlong"
+  ],
+  "config_flow": true,
+  "dependencies": [],
+  "documentation": "https://github.com/gondlong/custom-shopping-and-debt-list",
+  "integration_type": "helper",
+  "iot_class": "local_push",
+  "issue_tracker": "https://github.com/gondlong/custom-shopping-and-debt-list/issues",
+  "requirements": [],
+  "version": "1.0.1",
+  "homeassistant": {
+    "min_version": "2024.11.0"
+  }
+}
