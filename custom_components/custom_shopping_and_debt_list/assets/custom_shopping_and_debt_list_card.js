@@ -6,10 +6,10 @@
 const DOMAIN = "custom_shopping_and_debt_list";
 
 const DEFAULT_ENTITIES = [
-  "sensor.ndlong_shop_shopping_list",
-  "sensor.ndlong_shop_total_debt",
-  "sensor.ndlong_shop_debt_list",
-  "sensor.ndlong_shop_debt_by_category",
+  "sensor.shopping_debt_shopping_list",
+  "sensor.shopping_debt_total_debt",
+  "sensor.shopping_debt_debt_list",
+  "sensor.shopping_debt_debt_by_category",
 ];
 
 const DEFAULT_SHOPPING_CATS = [
@@ -83,7 +83,7 @@ const CARD_STYLES = [
   ".empty { padding: 12px; font-size: 12px; color: var(--secondary-text-color, #9e9e9e); text-align: center; }",
 ].join("\n");
 
-class NdlongShopCard extends HTMLElement {
+class ShoppingAndDebtCard extends HTMLElement {
   constructor() {
     super();
     this._title = "Daftar Belanja & Hutang";
@@ -624,7 +624,7 @@ function esc(value) {
 }
 
 if (!customElements.get("custom-shopping-and-debt-list")) {
-  customElements.define("custom-shopping-and-debt-list", NdlongShopCard);
+  customElements.define("custom-shopping-and-debt-list", ShoppingAndDebtCard);
 }
 
 window.customCards = window.customCards || [];
