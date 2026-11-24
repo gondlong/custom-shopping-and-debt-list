@@ -1,0 +1,105 @@
+custom_shopping_and_debt_list_add_shopping:
+  name: Add shopping item
+  description: Add an item to the shopping list.
+  fields:
+    name:
+      name: Name
+      description: Name of the shopping item.
+      required: true
+      example: Beras
+      selector:
+        text:
+    qty:
+      name: Quantity
+      description: Quantity or unit of the shopping item.
+      required: false
+      example: 5 kg
+      selector:
+        text:
+    cat:
+      name: Category
+      description: Category of the shopping item.
+      required: false
+      default: Kebutuhan
+      example: Makanan
+      selector:
+        text:
+
+custom_shopping_and_debt_list_remove_shopping:
+  name: Remove shopping item
+  description: Remove an item from the shopping list.
+  fields:
+    item_id:
+      name: Item ID
+      description: Unique ID of the shopping item to remove.
+      required: true
+      example: a1b2c3d4e5f6
+      selector:
+        text:
+
+custom_shopping_and_debt_list_toggle_shopping:
+  name: Toggle shopping item
+  description: Toggle the completed status of a shopping item.
+  fields:
+    item_id:
+      name: Item ID
+      description: Unique ID of the shopping item to toggle.
+      required: true
+      example: a1b2c3d4e5f6
+      selector:
+        text:
+
+custom_shopping_and_debt_list_clear_shopping:
+  name: Clear shopping list
+  description: Remove every item from the shopping list.
+  fields: {}
+
+custom_shopping_and_debt_list_add_debt:
+  name: Add debt
+  description: Add a debt entry to the debt list.
+  fields:
+    kategori:
+      name: Category
+      description: Category of the debt entry.
+      required: true
+      example: Listrik
+      selector:
+        text:
+    nominal:
+      name: Amount
+      description: Debt amount.
+      required: true
+      example: "350000"
+      selector:
+        text:
+    catatan:
+      name: Notes
+      description: Additional notes about the debt.
+      required: false
+      example: PLN
+      selector:
+        text:
+    due_date:
+      name: Due date
+      description: Date when the debt is due.
+      required: false
+      example: "2026-12-31"
+      selector:
+        date:
+
+custom_shopping_and_debt_list_remove_debt:
+  name: Remove debt
+  description: Remove an entry from the debt list.
+  fields:
+    entry_id:
+      name: Entry ID
+      description: Unique ID of the debt entry to remove.
+      required: true
+      example: a1b2c3d4e5f6
+      selector:
+        text:
+
+custom_shopping_and_debt_list_clear_debt:
+  name: Clear debt list
+  description: Remove every entry from the debt list.
+  fields: {}
