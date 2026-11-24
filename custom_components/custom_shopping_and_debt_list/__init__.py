@@ -22,6 +22,7 @@ except ImportError:  # pragma: no cover - older HA
     from homeassistant.helpers.store import Store  # type: ignore[no-redef]
 
 from .const import DATA_DEBT, DATA_SHOPPING, DOMAIN
+from .lovelace import async_install_card
 from .services import register_services
 
 _LOGGER = logging.getLogger(__name__)
@@ -50,6 +51,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     # --- services ---
     register_services(hass)
+
+    # --- Lovelace card (copied to www/ + registered as a resource) ---
+    try:
+        await async_install_card(hass)
+    except Exception:  # noqa: BLE001
+        _LOGGER.exception(
+            "custom_shopping_and_debt_list: could not install the Lovelace card"
+        )
 
     # --- sensor platform ---
     await hass.config_entries.async_forward_entry_setups(entry, ["sensor"])
