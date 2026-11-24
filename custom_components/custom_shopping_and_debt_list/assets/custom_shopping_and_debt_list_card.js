@@ -1,10 +1,9 @@
 /**
  * Custom Lovelace card for the Custom Shopping and Debt List integration.
  *
- * The file is copied into the Home Assistant "www" folder by the
- * integration and registered automatically as a Lovelace dashboard resource.
- *
- * Card type: custom:custom-shopping-and-debt-list
+ * The card structure and forms are created only once. Home Assistant state
+ * updates replace only the dynamic list content, so typing, focus, and form
+ * values are not interrupted.
  */
 
 const DOMAIN = "custom_shopping_and_debt_list";
@@ -34,67 +33,166 @@ const DEFAULT_DEBT_CATS = [
 ];
 
 const STYLES = `
-  :host { display: block; }
+  :host {
+    display: block;
+  }
+
   .wrap {
     font-family: var(--paper-font-body1_-_font-family, inherit);
     color: var(--primary-text-color);
   }
-  h2 { margin: 0 0 8px 0; font-size: 18px; font-weight: 500; }
-  h3 { margin: 16px 0 4px 0; font-size: 14px; font-weight: 500; opacity: .8; }
-  .muted { opacity: .6; font-size: 12px; }
-  ul { list-style: none; margin: 0; padding: 0; }
+
+  h2 {
+    margin: 0 0 8px;
+    font-size: 18px;
+    font-weight: 500;
+  }
+
+  h3 {
+    margin: 16px 0 4px;
+    font-size: 14px;
+    font-weight: 500;
+    opacity: 0.8;
+  }
+
+  .muted {
+    opacity: 0.6;
+    font-size: 12px;
+  }
+
+  ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
   li.item {
-    display: flex; align-items: center; gap: 8px;
-    padding: 6px 8px; border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 8px;
+    border-radius: 8px;
   }
-  li.item + li.item { border-top: 1px solid var(--divider-color, #e0e0e0); }
-  li.item.done .name { text-decoration: line-through; opacity: .5; }
-  li.item .name { flex: 1; }
-  li.item .qty { opacity: .7; font-size: 12px; }
+
+  li.item + li.item {
+    border-top: 1px solid var(--divider-color, #e0e0e0);
+  }
+
+  li.item.done .name {
+    text-decoration: line-through;
+    opacity: 0.5;
+  }
+
+  li.item .name {
+    flex: 1;
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  li.item .qty {
+    opacity: 0.7;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
   li.item .cat {
-    font-size: 11px; padding: 1px 6px; border-radius: 10px;
-    background: var(--secondary-background-color, #eee); opacity: .8;
+    font-size: 11px;
+    padding: 1px 6px;
+    border-radius: 10px;
+    background: var(--secondary-background-color, #eee);
+    opacity: 0.8;
+    white-space: nowrap;
   }
+
   button {
-    cursor: pointer; border: none; background: transparent;
-    color: inherit; font-size: 14px; padding: 2px 6px; border-radius: 6px;
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    color: inherit;
+    font-size: 14px;
+    padding: 2px 6px;
+    border-radius: 6px;
   }
-  button:hover { background: var(--secondary-background-color, #eee); }
+
+  button:hover {
+    background: var(--secondary-background-color, #eee);
+  }
+
+  button.primary {
+    background: var(--primary-color, #03a9f4);
+    color: var(--text-primary-color, #fff);
+    padding: 6px 12px;
+  }
+
+  button.cancel {
+    background: var(--secondary-background-color, #eee);
+    color: var(--primary-text-color);
+    padding: 6px 12px;
+  }
+
   form {
-    display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
     margin-top: 8px;
   }
-  input, select {
-    font: inherit; color: inherit; padding: 6px 8px; border-radius: 8px;
+
+  input,
+  select {
+    font: inherit;
+    color: inherit;
+    padding: 6px 8px;
+    border-radius: 8px;
     border: 1px solid var(--divider-color, #ccc);
     background: var(--card-background-color, #fff);
   }
-  input.grow { flex: 1; min-width: 90px; }
-  .total { font-size: 22px; font-weight: 600; }
-  .cat-row { margin-bottom: 2px; }
+
+  input.grow {
+    flex: 1;
+    min-width: 90px;
+  }
+
+  input[type="checkbox"] {
+    flex: 0 0 auto;
+  }
+
+  .total {
+    font-size: 22px;
+    font-weight: 600;
+  }
+
+  .cat-row {
+    margin-bottom: 2px;
+  }
+
   .card {
     background: var(--card-background-color, #fff);
     border-radius: var(--ha-card-border-radius, 12px);
     padding: 16px;
     box-shadow: var(--ha-card-box-shadow, none);
   }
+
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 6px;
+  }
 `;
 
 function esc(value) {
   return String(value ?? "").replace(
     /[&<>"']/g,
-    (ch) => ({
-      "&": "&amp;",
-      "<": "&lt;",
-      ">": "&gt;",
-      '"': "&quot;",
-      "'": "&#39;",
-    })[ch],
+    (ch) =>
+      ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;",
+      })[ch],
   );
-}
-
-function uid(prefix) {
-  return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
 class NdlongShopCard extends HTMLElement {
@@ -106,8 +204,9 @@ class NdlongShopCard extends HTMLElement {
     this._root = null;
     this._listenersAttached = false;
     this._renderQueued = false;
-    this._newItem = { name: "", qty: "", cat: "" };
-    this._newDebt = { kategori: "", nominal: "", catatan: "", due_date: "" };
+    this._lastSignature = "";
+    this._editShoppingId = null;
+    this._editDebtId = null;
   }
 
   getCardType() {
@@ -127,18 +226,54 @@ class NdlongShopCard extends HTMLElement {
 
   setConfig(config) {
     this._config = { ...(config || {}) };
+
     const entities = Array.isArray(this._config.entities)
       ? this._config.entities
       : [];
+
     const parsed = entities
-      .map((e) => (typeof e === "string" ? e : e.entity_id))
+      .map((entity) =>
+        typeof entity === "string" ? entity : entity?.entity_id,
+      )
       .filter(Boolean);
+
     this._entityIds = parsed.length ? parsed : [...DEFAULT_ENTITIES];
+    this._lastSignature = "";
+
+    if (this._root) {
+      const heading = this._root.querySelector("[data-card-title]");
+      if (heading) {
+        heading.textContent =
+          this._config.title || "Daftar Belanja & Hutang";
+      }
+    }
+
     this._scheduleRender();
   }
 
   set hass(hass) {
     this._hass = hass;
+    if (!hass || !hass.states) return;
+
+    const signature = this._entityIds
+      .map((entityId) => {
+        const state = hass.states[entityId];
+        if (!state) return `${entityId}:none`;
+
+        let attributes = "";
+        try {
+          attributes = JSON.stringify(state.attributes || {});
+        } catch (_err) {
+          attributes = "";
+        }
+
+        return `${entityId}:${state.state}:${attributes}`;
+      })
+      .join("|");
+
+    if (signature === this._lastSignature) return;
+
+    this._lastSignature = signature;
     this._scheduleRender();
   }
 
@@ -150,6 +285,8 @@ class NdlongShopCard extends HTMLElement {
     if (!this._root) {
       this._root = this.attachShadow({ mode: "open" });
     }
+
+    this._buildShell();
     this._attachListeners();
     this._scheduleRender();
   }
@@ -158,264 +295,644 @@ class NdlongShopCard extends HTMLElement {
     this._renderQueued = false;
   }
 
-  // ------------------------------------------------------------------ data
+  _scheduleRender() {
+    if (this._renderQueued) return;
+
+    this._renderQueued = true;
+    requestAnimationFrame(() => {
+      this._renderQueued = false;
+      this._renderData();
+    });
+  }
+
+  _buildShell() {
+    if (this._root.querySelector(".card")) return;
+
+    const title = this._config.title || "Daftar Belanja & Hutang";
+
+    this._root.innerHTML = `
+      <style>${STYLES}</style>
+      <div class="wrap card">
+        <h2 data-card-title>${esc(title)}</h2>
+
+        <h3>Belanja</h3>
+        <div data-shopping-summary class="muted"></div>
+        <ul data-shopping-list></ul>
+
+        <form id="add-item-form">
+          <input
+            class="grow"
+            name="name"
+            placeholder="Nama barang"
+            autocomplete="off"
+            required
+          >
+          <input
+            name="qty"
+            placeholder="Jumlah"
+            autocomplete="off"
+            style="width:90px"
+          >
+          <select name="cat" data-shopping-category></select>
+          <button type="submit" class="primary" data-shopping-submit>
+            Tambah
+          </button>
+          <button
+            type="button"
+            class="cancel"
+            data-action="cancel-edit-shopping"
+            data-shopping-cancel
+            hidden
+          >
+            Batal
+          </button>
+        </form>
+
+        <div class="actions">
+          <button
+            type="button"
+            data-action="clear-done-shopping"
+            data-clear-done-shopping
+            hidden
+          >
+            Hapus yang selesai
+          </button>
+          <button
+            type="button"
+            data-action="clear-shopping"
+            data-clear-shopping
+            hidden
+          >
+            Kosongkan daftar belanja
+          </button>
+        </div>
+
+        <h3>Hutang</h3>
+        <div class="total" data-debt-total>Rp 0</div>
+        <div data-debt-categories></div>
+        <ul data-debt-list></ul>
+
+        <form id="add-debt-form">
+          <select name="kategori" data-debt-category></select>
+          <input
+            name="nominal"
+            placeholder="Nominal"
+            inputmode="numeric"
+            autocomplete="off"
+            required
+            style="width:110px"
+          >
+          <input
+            class="grow"
+            name="catatan"
+            placeholder="Catatan"
+            autocomplete="off"
+          >
+          <input
+            name="due_date"
+            type="date"
+            style="width:140px"
+          >
+          <button type="submit" class="primary" data-debt-submit>
+            Tambah
+          </button>
+          <button
+            type="button"
+            class="cancel"
+            data-action="cancel-edit-debt"
+            data-debt-cancel
+            hidden
+          >
+            Batal
+          </button>
+        </form>
+
+        <div class="actions">
+          <button
+            type="button"
+            data-action="clear-debt"
+            data-clear-debt
+            hidden
+          >
+            Kosongkan daftar utang
+          </button>
+        </div>
+      </div>
+    `;
+  }
 
   _entityState(suffix, fallbackIndex) {
     if (!this._hass || !this._hass.states) return null;
-    const found = this._entityIds.find((id) => id.endsWith(suffix));
+
+    const found = this._entityIds.find((entityId) =>
+      entityId.endsWith(suffix),
+    );
     const target = found || this._entityIds[fallbackIndex];
+
     if (!target) return null;
     return this._hass.states[target] || null;
   }
 
   _shopping() {
-    const st = this._entityState("shopping_list", 0);
-    if (!st || !st.attributes) return [];
-    const list = st.attributes.list || [];
+    const state = this._entityState("shopping_list", 0);
+    if (!state || !state.attributes) return [];
+
+    const list =
+      state.attributes.list ||
+      state.attributes.items ||
+      state.attributes.shopping_list;
+
     return Array.isArray(list) ? list : [];
   }
 
   _debt() {
-    const st = this._entityState("debt_list", 2);
-    if (!st || !st.attributes) return [];
-    const list = st.attributes.debt_list || [];
+    const state = this._entityState("debt_list", 2);
+    if (!state || !state.attributes) return [];
+
+    const list =
+      state.attributes.debt_list ||
+      state.attributes.list ||
+      state.attributes.entries;
+
     return Array.isArray(list) ? list : [];
   }
 
   _total() {
-    const st = this._entityState("total_debt", 1);
-    const n = st ? Number(st.state) : 0;
-    return Number.isFinite(n) ? n : 0;
+    const state =
+      this._entityState("total_debt", 1) ||
+      this._entityState("debt_total", 1);
+    const total = state ? Number(state.state) : 0;
+
+    return Number.isFinite(total) ? total : 0;
   }
 
   _byKategori() {
-    const st = this._entityState("debt_by_category", 3);
-    if (!st || !st.attributes) return {};
-    const cats = st.attributes.by_kategori || {};
-    return typeof cats === "object" && !Array.isArray(cats) ? cats : {};
-  }
+    const state =
+      this._entityState("debt_by_category", 3) ||
+      this._entityState("debt_by_kategori", 3);
 
-  _shoppingCats() {
-    const seen = new Set(DEFAULT_SHOPPING_CATS);
-    this._shopping().forEach((it) => {
-      if (it && it.cat) seen.add(it.cat);
+    if (!state || !state.attributes) return {};
+
+    const categories =
+      state.attributes.by_kategori ||
+      state.attributes.by_category ||
+      state.attributes;
+
+    if (!categories || typeof categories !== "object") return {};
+    if (Array.isArray(categories)) return {};
+
+    const cleaned = {};
+    Object.keys(categories).forEach((key) => {
+      if (
+        key !== "friendly_name" &&
+        key !== "icon" &&
+        key !== "unit_of_measurement" &&
+        typeof categories[key] === "number"
+      ) {
+        cleaned[key] = categories[key];
+      }
     });
-    return Array.from(seen);
+
+    return cleaned;
   }
 
-  _debtCats() {
-    const seen = new Set(DEFAULT_DEBT_CATS);
-    Object.keys(this._byKategori()).forEach((k) => seen.add(k));
-    this._debt().forEach((e) => {
-      if (e && e.kategori) seen.add(e.kategori);
+  _shoppingCategories() {
+    const categories = new Set(DEFAULT_SHOPPING_CATS);
+
+    this._shopping().forEach((item) => {
+      if (item?.cat) categories.add(item.cat);
     });
-    return Array.from(seen);
+
+    return Array.from(categories);
   }
 
-  // -------------------------------------------------------------- rendering
+  _debtCategories() {
+    const categories = new Set(DEFAULT_DEBT_CATS);
 
-  _scheduleRender() {
-    if (this._renderQueued) return;
-    this._renderQueued = true;
-    requestAnimationFrame(() => {
-      this._renderQueued = false;
-      this._render();
+    Object.keys(this._byKategori()).forEach((key) => categories.add(key));
+
+    this._debt().forEach((entry) => {
+      if (entry?.kategori) categories.add(entry.kategori);
     });
+
+    return Array.from(categories);
   }
 
-  _render() {
-    if (!this.isConnected) return;
-    const root = this._root || (this._root = this.attachShadow({ mode: "open" }));
+  _renderData() {
+    if (!this.isConnected || !this._root) return;
+
     const shopping = this._shopping();
     const debt = this._debt();
     const total = this._total();
     const byKategori = this._byKategori();
-    const title = this._config.title || "Daftar Belanja & Hutang";
+    const doneCount = shopping.filter((item) => Boolean(item?.done)).length;
 
-    root.innerHTML = `
-      <style>${STYLES}</style>
-      <div class="wrap card">
-        <h2>${esc(title)}</h2>
+    this._updateSelect(
+      this._root.querySelector("[data-shopping-category]"),
+      this._shoppingCategories(),
+    );
+    this._updateSelect(
+      this._root.querySelector("[data-debt-category]"),
+      this._debtCategories(),
+    );
 
-        <h3>Belanja</h3>
-        ${
-          shopping.length
-            ? `<ul>${shopping.map((it) => this._shoppingRow(it)).join("")}</ul>`
-            : `<div class="muted">Belanja kosong.</div>`
-        }
-        <form id="add-item-form">
-          <input class="grow" name="name" placeholder="Nama barang" required>
-          <input name="qty" placeholder="Jumlah" style="width:90px">
-          <select name="cat">
-            ${this._shoppingCats()
-              .map((c) => `<option value="${esc(c)}">${esc(c)}</option>`)
-              .join("")}
-          </select>
-          <button type="submit">Tambah</button>
-        </form>
-        ${
-          shopping.length
-            ? `<div><button data-action="clear-shopping">Kosongkan daftar belanja</button></div>`
-            : ""
-        }
+    const summary = this._root.querySelector("[data-shopping-summary]");
+    if (summary) {
+      summary.textContent = shopping.length
+        ? `${shopping.length} item, ${doneCount} selesai`
+        : "Belanja kosong.";
+    }
 
-        <h3>Hutang</h3>
-        <div class="total">Rp ${Number(total).toLocaleString("id-ID")}</div>
-        ${
-          Object.keys(byKategori).length
-            ? Object.keys(byKategori)
-                .map(
-                  (k) =>
-                    `<div class="cat-row"><span>${esc(k)}</span>: <b>Rp ${Number(
-                      byKategori[k],
-                    ).toLocaleString("id-ID")}</b></div>`,
-                )
-                .join("")
-            : `<div class="muted">Belum ada utang.</div>`
-        }
-        ${
-          debt.length
-            ? `<ul>${debt.map((e) => this._debtRow(e)).join("")}</ul>`
-            : ""
-        }
-        <form id="add-debt-form">
-          <select name="kategori">
-            ${this._debtCats()
-              .map((c) => `<option value="${esc(c)}">${esc(c)}</option>`)
-              .join("")}
-          </select>
-          <input name="nominal" placeholder="Nominal" required style="width:100px">
-          <input class="grow" name="catatan" placeholder="Catatan">
-          <input name="due_date" type="date" style="width:140px">
-          <button type="submit">Tambah</button>
-        </form>
-        ${
-          debt.length
-            ? `<div><button data-action="clear-debt">Kosongkan daftar utang</button></div>`
-            : ""
-        }
-      </div>
-    `;
-    this._attachListeners();
+    const shoppingList = this._root.querySelector(
+      "[data-shopping-list]",
+    );
+    if (shoppingList) {
+      shoppingList.innerHTML = shopping.length
+        ? shopping.map((item) => this._shoppingRow(item)).join("")
+        : "";
+    }
+
+    const debtList = this._root.querySelector("[data-debt-list]");
+    if (debtList) {
+      debtList.innerHTML = debt.length
+        ? debt.map((entry) => this._debtRow(entry)).join("")
+        : "";
+    }
+
+    const totalElement = this._root.querySelector("[data-debt-total]");
+    if (totalElement) {
+      totalElement.textContent = `Rp ${Math.round(total).toLocaleString(
+        "id-ID",
+      )}`;
+    }
+
+    const categoryElement = this._root.querySelector(
+      "[data-debt-categories]",
+    );
+    if (categoryElement) {
+      const categoryNames = Object.keys(byKategori);
+      categoryElement.innerHTML = categoryNames.length
+        ? categoryNames
+            .map(
+              (key) =>
+                `<div class="cat-row"><span>${esc(key)}</span>: <b>Rp ${Number(
+                  byKategori[key],
+                ).toLocaleString("id-ID")}</b></div>`,
+            )
+            .join("")
+        : '<div class="muted">Belum ada utang.</div>';
+    }
+
+    const clearDone = this._root.querySelector(
+      "[data-clear-done-shopping]",
+    );
+    if (clearDone) clearDone.hidden = doneCount === 0;
+
+    const clearShopping = this._root.querySelector(
+      "[data-clear-shopping]",
+    );
+    if (clearShopping) clearShopping.hidden = shopping.length === 0;
+
+    const clearDebt = this._root.querySelector("[data-clear-debt]");
+    if (clearDebt) clearDebt.hidden = debt.length === 0;
   }
 
-  _shoppingRow(it) {
-    const id = esc(it && it.id);
-    const done = it && it.done;
+  _updateSelect(select, categories) {
+    if (!select) return;
+
+    const selected = select.value;
+    const options = categories
+      .map(
+        (category) =>
+          `<option value="${esc(category)}">${esc(category)}</option>`,
+      )
+      .join("");
+
+    select.innerHTML = options;
+
+    if (categories.includes(selected)) {
+      select.value = selected;
+    }
+  }
+
+  _shoppingRow(item) {
+    const id = esc(item?.id);
+    const done = Boolean(item?.done);
+
     return `
       <li class="item ${done ? "done" : ""}">
-        <input type="checkbox" data-action="toggle" data-id="${id}" ${
-          done ? "checked" : ""
-        }>
-        <span class="name">${esc(it && it.name)}</span>
-        <span class="qty">${esc(it && it.qty)}</span>
-        <span class="cat">${esc(it && it.cat)}</span>
-        <button data-action="remove-shopping" data-id="${id}">✕</button>
+        <input
+          type="checkbox"
+          data-action="toggle"
+          data-id="${id}"
+          ${done ? "checked" : ""}
+          aria-label="Tandai selesai"
+        >
+        <span class="name">${esc(item?.name)}</span>
+        <span class="qty">${esc(item?.qty)}</span>
+        <span class="cat">${esc(item?.cat)}</span>
+        <button
+          type="button"
+          data-action="edit-shopping"
+          data-id="${id}"
+          title="Edit"
+        >
+          &#9998;
+        </button>
+        <button
+          type="button"
+          data-action="remove-shopping"
+          data-id="${id}"
+          title="Hapus"
+        >
+          &#215;
+        </button>
       </li>
     `;
   }
 
-  _debtRow(e) {
-    const id = esc(e && e.id);
-    const due = e && e.due_date ? ` · jatuh tempo ${esc(e.due_date)}` : "";
-    const note = e && e.catatan ? ` (${esc(e.catatan)})` : "";
+  _debtRow(entry) {
+    const id = esc(entry?.id);
+    const due = entry?.due_date
+      ? ` · jatuh tempo ${esc(String(entry.due_date).split("T")[0])}`
+      : "";
+    const note = entry?.catatan ? ` (${esc(entry.catatan)})` : "";
+
     return `
       <li class="item">
-        <span class="name">${esc(e && e.kategori)}${note}${due}</span>
-        <span class="qty">Rp ${Number((e && e.nominal) || 0).toLocaleString("id-ID")}</span>
-        <button data-action="remove-debt" data-id="${id}">✕</button>
+        <span class="name">
+          ${esc(entry?.kategori)}${note}${due}
+        </span>
+        <span class="qty">
+          Rp ${Number(entry?.nominal || 0).toLocaleString("id-ID")}
+        </span>
+        <button
+          type="button"
+          data-action="edit-debt"
+          data-id="${id}"
+          title="Edit"
+        >
+          &#9998;
+        </button>
+        <button
+          type="button"
+          data-action="remove-debt"
+          data-id="${id}"
+          title="Hapus"
+        >
+          &#215;
+        </button>
       </li>
     `;
   }
 
-  // -------------------------------------------------------------- handlers
-
   _attachListeners() {
-    const root = this._root;
-    if (!root) return;
+    if (this._listenersAttached || !this._root) return;
 
-    if (!this._listenersAttached) {
-      this._listenersAttached = true;
+    this._listenersAttached = true;
 
-      root.addEventListener("click", (ev) => {
-        const el = ev.target.closest("[data-action]");
-        if (!el) return;
-        ev.preventDefault();
-        const action = el.getAttribute("data-action");
-        const id = el.getAttribute("data-id");
-        if (action === "toggle") {
-          this._call("custom_shopping_and_debt_list_toggle_shopping", {
-            item_id: id,
-          });
-        } else if (action === "remove-shopping") {
-          this._call("custom_shopping_and_debt_list_remove_shopping", {
-            item_id: id,
-          });
-        } else if (action === "remove-debt") {
-          this._call("custom_shopping_and_debt_list_remove_debt", {
-            entry_id: id,
-          });
-        } else if (action === "clear-shopping") {
-          this._call("custom_shopping_and_debt_list_clear_shopping", {});
-        } else if (action === "clear-debt") {
-          this._call("custom_shopping_and_debt_list_clear_debt", {});
-        }
-      });
+    this._root.addEventListener("click", (event) => {
+      const target = event.target;
+      if (!target?.closest) return;
 
-      root.addEventListener("submit", (ev) => {
-        const form = ev.target;
-        if (!form || !form.id) return;
-        ev.preventDefault();
+      const element = target.closest("[data-action]");
+      if (!element) return;
 
-        if (form.id === "add-item-form") {
-          const fd = new FormData(form);
-          const name = String(fd.get("name") || "").trim();
-          if (!name) return;
-          this._call("custom_shopping_and_debt_list_add_shopping", {
-            name,
-            qty: String(fd.get("qty") || "").trim(),
-            cat: String(fd.get("cat") || "Kebutuhan").trim(),
-          });
-          form.reset();
-        } else if (form.id === "add-debt-form") {
-          const fd = new FormData(form);
-          const kategori = String(fd.get("kategori") || "").trim();
-          const nominal = String(fd.get("nominal") || "").trim();
-          if (!kategori || !nominal) return;
-          this._call("custom_shopping_and_debt_list_add_debt", {
-            kategori,
-            nominal,
-            catatan: String(fd.get("catatan") || "").trim(),
-            due_date: String(fd.get("due_date") || "").trim(),
-          });
-          form.reset();
-        }
+      event.preventDefault();
+
+      const action = element.dataset.action;
+      const id = element.dataset.id || "";
+
+      if (action === "toggle" && id) {
+        this._call("custom_shopping_and_debt_list_toggle_shopping", {
+          item_id: id,
+        });
+      } else if (action === "remove-shopping" && id) {
+        this._call("custom_shopping_and_debt_list_remove_shopping", {
+          item_id: id,
+        });
+      } else if (action === "remove-debt" && id) {
+        this._call("custom_shopping_and_debt_list_remove_debt", {
+          entry_id: id,
+        });
+      } else if (action === "clear-shopping") {
+        this._call("custom_shopping_and_debt_list_clear_shopping", {});
+      } else if (action === "clear-debt") {
+        this._call("custom_shopping_and_debt_list_clear_debt", {});
+      } else if (action === "clear-done-shopping") {
+        this._clearDoneShopping();
+      } else if (action === "edit-shopping") {
+        this._startShoppingEdit(id);
+      } else if (action === "cancel-edit-shopping") {
+        this._cancelShoppingEdit();
+      } else if (action === "edit-debt") {
+        this._startDebtEdit(id);
+      } else if (action === "cancel-edit-debt") {
+        this._cancelDebtEdit();
+      }
+    });
+
+    this._root.addEventListener("submit", (event) => {
+      const form = event.target;
+      if (!form?.id) return;
+
+      event.preventDefault();
+
+      if (form.id === "add-item-form") {
+        this._submitShopping(form);
+      } else if (form.id === "add-debt-form") {
+        this._submitDebt(form);
+      }
+    });
+  }
+
+  async _submitShopping(form) {
+    const formData = new FormData(form);
+    const name = String(formData.get("name") || "").trim();
+    if (!name) return;
+
+    const qty = String(formData.get("qty") || "").trim();
+    const category =
+      String(formData.get("cat") || "Kebutuhan").trim() || "Kebutuhan";
+
+    if (this._editShoppingId) {
+      const oldId = String(this._editShoppingId);
+      this._editShoppingId = null;
+
+      await this._call(
+        "custom_shopping_and_debt_list_remove_shopping",
+        { item_id: oldId },
+      );
+    }
+
+    await this._call("custom_shopping_and_debt_list_add_shopping", {
+      name,
+      qty,
+      cat: category,
+    });
+
+    form.reset();
+    this._setShoppingEditMode(false);
+    this._lastSignature = "";
+  }
+
+  async _submitDebt(form) {
+    const formData = new FormData(form);
+    const kategori = String(formData.get("kategori") || "").trim();
+    const nominal = String(formData.get("nominal") || "")
+      .replace(/[^\d.-]/g, "")
+      .trim();
+
+    if (!kategori || !nominal) return;
+
+    const catatan = String(formData.get("catatan") || "").trim();
+    const dueDate = String(formData.get("due_date") || "").trim();
+
+    if (this._editDebtId) {
+      const oldId = String(this._editDebtId);
+      this._editDebtId = null;
+
+      await this._call("custom_shopping_and_debt_list_remove_debt", {
+        entry_id: oldId,
       });
     }
+
+    await this._call("custom_shopping_and_debt_list_add_debt", {
+      kategori,
+      nominal,
+      catatan,
+      due_date: dueDate,
+    });
+
+    form.reset();
+    this._setDebtEditMode(false);
+    this._lastSignature = "";
+  }
+
+  async _clearDoneShopping() {
+    const doneItems = this._shopping().filter((item) => item?.done);
+
+    for (const item of doneItems) {
+      await this._call("custom_shopping_and_debt_list_remove_shopping", {
+        item_id: String(item.id),
+      });
+    }
+
+    this._lastSignature = "";
+  }
+
+  _startShoppingEdit(id) {
+    const item = this._shopping().find(
+      (entry) => String(entry.id) === String(id),
+    );
+    if (!item) return;
+
+    this._editShoppingId = item.id;
+
+    const form = this._root.querySelector("#add-item-form");
+    if (!form) return;
+
+    form.elements.name.value = item.name || "";
+    form.elements.qty.value = item.qty || "";
+
+    const category = form.elements.cat;
+    if (category) category.value = item.cat || "Kebutuhan";
+
+    this._setShoppingEditMode(true);
+    form.elements.name.focus();
+  }
+
+  _cancelShoppingEdit() {
+    this._editShoppingId = null;
+
+    const form = this._root.querySelector("#add-item-form");
+    if (form) form.reset();
+
+    this._setShoppingEditMode(false);
+  }
+
+  _setShoppingEditMode(editing) {
+    const submit = this._root.querySelector("[data-shopping-submit]");
+    const cancel = this._root.querySelector("[data-shopping-cancel]");
+
+    if (submit) submit.textContent = editing ? "Simpan" : "Tambah";
+    if (cancel) cancel.hidden = !editing;
+  }
+
+  _startDebtEdit(id) {
+    const entry = this._debt().find(
+      (item) => String(item.id) === String(id),
+    );
+    if (!entry) return;
+
+    this._editDebtId = entry.id;
+
+    const form = this._root.querySelector("#add-debt-form");
+    if (!form) return;
+
+    const category = form.elements.kategori;
+    if (category) category.value = entry.kategori || "Lainnya";
+
+    form.elements.nominal.value = String(entry.nominal || "");
+    form.elements.catatan.value = entry.catatan || "";
+    form.elements.due_date.value = entry.due_date
+      ? String(entry.due_date).split("T")[0]
+      : "";
+
+    this._setDebtEditMode(true);
+    form.elements.nominal.focus();
+  }
+
+  _cancelDebtEdit() {
+    this._editDebtId = null;
+
+    const form = this._root.querySelector("#add-debt-form");
+    if (form) form.reset();
+
+    this._setDebtEditMode(false);
+  }
+
+  _setDebtEditMode(editing) {
+    const submit = this._root.querySelector("[data-debt-submit]");
+    const cancel = this._root.querySelector("[data-debt-cancel]");
+
+    if (submit) submit.textContent = editing ? "Simpan" : "Tambah";
+    if (cancel) cancel.hidden = !editing;
   }
 
   async _call(service, data) {
     if (!this._hass) return;
+
     try {
       await this._hass.callService(DOMAIN, service, data);
-    } catch (err) {
-      console.error(`custom-shopping-and-debt-list: ${service} failed`, err);
+    } catch (error) {
+      console.error(
+        `custom-shopping-and-debt-list: ${service} failed`,
+        error,
+      );
     }
   }
 }
 
 if (!customElements.get("custom-shopping-and-debt-list")) {
-  customElements.define("custom-shopping-and-debt-list", NdlongShopCard);
+  customElements.define(
+    "custom-shopping-and-debt-list",
+    NdlongShopCard,
+  );
 }
 
 window.customCards = window.customCards || [];
+
 if (
-  !window.customCards.some((card) => card.type === "custom-shopping-and-debt-list")
+  !window.customCards.some(
+    (card) => card.type === "custom-shopping-and-debt-list",
+  )
 ) {
   window.customCards.push({
     type: "custom-shopping-and-debt-list",
-    name: "Daftar Belanja & Hutang",
-    description: "Kartu daftar belanja dan hutang untuk Custom Shopping and Debt List.",
+    name: "Daftar Belanja & Utang",
+    description:
+      "Kartu daftar belanja dan hutang untuk Custom Shopping and Debt List.",
     preview: true,
   });
 }
